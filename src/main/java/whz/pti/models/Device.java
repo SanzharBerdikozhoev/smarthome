@@ -2,6 +2,7 @@ package whz.pti.models;
 
 import whz.pti.repositories.implementation.DeviceTypeRepoImpl;
 import whz.pti.repositories.implementation.RoomRepoImpl;
+import whz.pti.repositories.implementation.ScenarioRepoImpl;
 import whz.pti.repositories.implementation.UserRepoImpl;
 import whz.pti.utils.annotations.ForeignKey;
 import whz.pti.utils.annotations.ManyToMany;
@@ -26,9 +27,17 @@ public class Device {
     )
     private List<User> users;
 
+    @ManyToMany(
+            joinTable     = "device_scenario",
+            joinColumn    = "device_id",
+            inverseColumn = "automation_id",
+            repoClass     = ScenarioRepoImpl.class
+    )
+    private List<Scenario> scenarios;
+
     public Device( ){}
 
-    public Device(Long id, String name, Room room, DeviceType deviceType, LocalDate installDate, boolean active, List<User> users) {
+    public Device(Long id, String name, Room room, DeviceType deviceType, LocalDate installDate, boolean active, List<User> users,  List<Scenario> scenarios) {
         this.id = id;
         this.name = name;
         this.room = room;
@@ -36,6 +45,7 @@ public class Device {
         this.installDate = installDate;
         this.active = active;
         this.users = users;
+        this.scenarios = scenarios;
     }
 
     public Long getId() {
@@ -92,6 +102,14 @@ public class Device {
 
     public void setUsers(List<User> users) {
         this.users = users;
+    }
+
+    public List<Scenario> getScenarios() {
+        return scenarios;
+    }
+
+    public void setScenarios(List<Scenario> scenarios) {
+        this.scenarios = scenarios;
     }
 
     @Override

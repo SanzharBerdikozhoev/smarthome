@@ -1,16 +1,31 @@
 package whz.pti.models;
 
+import whz.pti.repositories.implementation.DeviceRepoImpl;
+import whz.pti.repositories.implementation.ScenarioRepoImpl;
+import whz.pti.utils.annotations.ForeignKey;
+
 public class DeviceScenario {
+    @ForeignKey(column = "device_id", repoClass = DeviceRepoImpl.class)
     private Device device;
+    @ForeignKey(column = "automation_id", repoClass = ScenarioRepoImpl.class)
     private Scenario scenario;
+    private String role;
 
     public DeviceScenario() {}
 
-    public DeviceScenario(Long id, Device device, Scenario scenario) {
+    public DeviceScenario(Long id, Device device, Scenario scenario,  String role) {
         this.device = device;
         this.scenario = scenario;
+        this.role = role;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
 
     public Device getDevice() {
         return device;

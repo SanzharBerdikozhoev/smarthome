@@ -1,17 +1,21 @@
 package whz.pti.models;
 
+import whz.pti.repositories.implementation.HouseRepoImpl;
+import whz.pti.utils.annotations.ForeignKey;
+
 import java.math.BigDecimal;
 
 public class Room {
-    private BigDecimal id;
+    private Long id;
     private String name;
     private String floor;
     private double square;
+    @ForeignKey(column = "home_id", repoClass = HouseRepoImpl.class)
     private Home home;
 
     public Room() {}
 
-    public Room(BigDecimal id, String name, String floor, double square, Home home) {
+    public Room(Long id, String name, String floor, double square, Home home) {
         this.id = id;
         this.name = name;
         this.floor = floor;
@@ -19,11 +23,11 @@ public class Room {
         this.home = home;
     }
 
-    public BigDecimal getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

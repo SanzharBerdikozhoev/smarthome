@@ -5,12 +5,12 @@ CREATE TABLE users
     id            INT PRIMARY KEY IDENTITY (1,1),
     username      VARCHAR(50)  NOT NULL UNIQUE,
     email         VARCHAR(100) NOT NULL UNIQUE,
-    role          VARCHAR(20)  NOT NULL DEFAULT 'Reader',
+    role          VARCHAR(20)  NOT NULL DEFAULT 'READER',
     password_hash VARCHAR(255) NOT NULL,
     created_at    DATETIME     NOT NULL DEFAULT GETDATE(),
 
     CONSTRAINT ck_user_role
-        CHECK (role IN ('Reader', 'ReadWriter', 'Admin'))
+        CHECK (role IN ('ADMIN', 'WRITER', 'READER'))
 );
 
 CREATE TABLE home

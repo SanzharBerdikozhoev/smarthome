@@ -1,12 +1,21 @@
 package whz.pti.models;
 
+import whz.pti.repositories.implementation.DeviceRepoImpl;
+import whz.pti.repositories.implementation.UserRepoImpl;
+import whz.pti.utils.annotations.Column;
+import whz.pti.utils.annotations.ForeignKey;
+
 import java.time.LocalDateTime;
 
 public class DeviceStateLog {
     private Long id;
+    @ForeignKey(column = "device_id", repoClass = DeviceRepoImpl.class)
     private Device device;
+    @Column(name = "timestamp")
     private LocalDateTime time;
+    @Column(name = "state_value")
     private String state;
+    @ForeignKey(column = "user_id", repoClass = UserRepoImpl.class)
     private User user;
 
     public DeviceStateLog() {}

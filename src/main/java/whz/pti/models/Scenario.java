@@ -1,18 +1,40 @@
 package whz.pti.models;
 
+import whz.pti.repositories.implementation.DeviceRepoImpl;
+import whz.pti.utils.annotations.Column;
+import whz.pti.utils.annotations.ManyToMany;
+
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
 
 public class Scenario {
     private Long id;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    @Column(name = "device_id")
+    private String deviceName;
+    private Boolean isActive;
+    @Column(name = "start_time")
+    private LocalTime startTime;
+    @Column(name = "end_time")
+    private LocalTime endTime;
+
+    @ManyToMany(
+            joinTable     = "device_scenario",
+            joinColumn    = "automation_id",
+            inverseColumn = "device_id",
+            repoClass     = DeviceRepoImpl.class
+    )
+    private List<Device> devices;
 
     private Scenario() {}
 
-    public Scenario(Long id, LocalDateTime startTime, LocalDateTime endTime) {
+    public Scenario(Long id, String deviceName, Boolean isActive ,LocalTime startTime, LocalTime endTime, List<Device> devices) {
         this.id = id;
+        this.deviceName = deviceName;
+        this.isActive = isActive;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.devices = devices;
     }
 
     public Long getId() {
@@ -23,22 +45,43 @@ public class Scenario {
         this.id = id;
     }
 
-    public LocalDateTime getStartTime() {
+    public LocalTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(LocalDateTime startTime) {
+    public void setStartTime(LocalTime startTime) {
         this.startTime = startTime;
     }
 
-    public LocalDateTime getEndTime() {
+    public LocalTime getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(LocalDateTime endTime) {
+    public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
     }
 
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+    }
+
+    public List<Device> getDevices() {
+        return devices;
+    }
+
+    public void setDevices(List<Device> devices) {
+        this.devices = devices;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+    public void setIsActive(Boolean isActive) {this.isActive = isActive;}
 
     @Override
     public String toString() {

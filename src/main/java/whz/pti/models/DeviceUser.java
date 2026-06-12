@@ -1,14 +1,24 @@
 package whz.pti.models;
 
+import whz.pti.repositories.implementation.DeviceRepoImpl;
+import whz.pti.repositories.implementation.UserRepoImpl;
+import whz.pti.utils.annotations.ForeignKey;
+
+import java.time.LocalDate;
+
 public class DeviceUser {
+    @ForeignKey(column = "device_id", repoClass = DeviceRepoImpl.class)
     private Device device;
+    @ForeignKey(column = "user_id", repoClass = UserRepoImpl.class)
     private User user;
+    private LocalDate assignedSince;
 
     private DeviceUser() {}
 
-    public DeviceUser(Long id, Device device, User user) {
+    public DeviceUser(Long id, Device device, User user, LocalDate assignedSince) {
         this.device = device;
         this.user = user;
+        this.assignedSince = assignedSince;
     }
 
     public Device getDevice() {
@@ -25,6 +35,14 @@ public class DeviceUser {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public LocalDate getAssignedSince() {
+        return assignedSince;
+    }
+
+    public void setAssignedSince(LocalDate assignedSince) {
+        this.assignedSince = assignedSince;
     }
 
     @Override
