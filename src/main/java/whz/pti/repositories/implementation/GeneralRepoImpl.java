@@ -3,20 +3,28 @@ package whz.pti.repositories.implementation;
 import whz.pti.repositories.GeneralRepo;
 import whz.pti.utils.DBConnection;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 import java.sql.*;
 import java.util.*;
-import java.util.function.Function;
 
 public class GeneralRepoImpl<T> implements GeneralRepo<T> {
-    private final DBConnection dbManager = DBConnection.getInstance();
-    private final String tableName;
-    private final Function<ResultSet, T> rowMapper;
-    private final Function<T, Map<String, Object>> rowUnmapper;
+    protected final DBConnection dbManager = DBConnection.getInstance();
+    protected final Class<T> clazz;
+    protected final String tableName;
 
-    public GeneralRepoImpl(String tableName, Function<ResultSet, T> rowMapper, Function<T, Map<String, Object>> rowUnmapper) {
+    @SuppressWarnings("unchecked")
+    public GeneralRepoImpl() {
+        this.clazz = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass())
+                .getActualTypeArguments()[0];
+        this.tableName = clazz.getSimpleName().toLowerCase();
+    }
+
+    @SuppressWarnings("unchecked")
+    public GeneralRepoImpl(String tableName) {
+        this.clazz = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass())
+                .getActualTypeArguments()[0];
         this.tableName = tableName;
-        this.rowMapper = rowMapper;
-        this.rowUnmapper = rowUnmapper;
     }
 
     @Override
@@ -29,12 +37,12 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             stmt.setLong(1, id);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                if(rs.next()) {
-                    return Optional.of(rowMapper.apply(rs));
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -43,7 +51,9 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
     @Override
     public Optional<T> getByField(String field, Object value) {
-        String sql = String.format("SELECT * FROM %s WHERE %s = ?", tableName, field);
+        // Конвертируем имя поля Java в snake_case на случай, если передан camelCase
+        String sqlColumn = field.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+        String sql = String.format("SELECT * FROM %s WHERE %s = ?", tableName, sqlColumn);
 
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -62,11 +72,11 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(rowMapper.apply(rs));
+                    return Optional.of(mapRow(rs));
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -76,21 +86,18 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
     @Override
     public Iterable<T> getAll() {
         List<T> resultList = new ArrayList<>();
-
         String sql = String.format("SELECT * FROM %s", tableName);
 
         try (Connection conn = dbManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    resultList.add(rowMapper.apply(rs));
-                }
-
-                return resultList;
+            while (rs.next()) {
+                resultList.add(mapRow(rs));
             }
+            return resultList;
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -100,10 +107,10 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
     @Override
     public Iterable<T> getPage(int page, int pageSize) {
         List<T> resultList = new ArrayList<>();
-
         int offset = (page - 1) * pageSize;
 
-        String sql = String.format("SELECT * FROM %s ORDER BY id OFFSET ? ROWS FETCH ? ROWS ONLY", tableName);
+        // В MS SQL Server для смещения обязательно использовать ORDER BY
+        String sql = String.format("SELECT * FROM %s ORDER BY id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY", tableName);
 
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -113,13 +120,12 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    resultList.add(rowMapper.apply(rs));
+                    resultList.add(mapRow(rs));
                 }
-
                 return resultList;
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -128,33 +134,33 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
     @Override
     public T save(T entity) {
-        Map<String, Object> fields = rowUnmapper.apply(entity);
+        try {
+            Map<String, Object> fields = unmapEntity(entity);
+            fields.remove("id"); // Первичный ключ генерируется в БД (IDENTITY)
 
-        fields.remove("id");
+            String columns = String.join(", ", fields.keySet());
+            String placeholders = String.join(", ", fields.keySet().stream().map(c -> "?").toList());
 
-        String columns = String.join(", ", fields.keySet());
-        String placeholders = String.join(", ", fields.keySet().stream().map(c -> "?").toList());
+            String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders);
 
-        String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders);
+            try (Connection conn = dbManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                int index = 1;
+                for (Object value : fields.values()) {
+                    stmt.setObject(index++, value);
+                }
 
-            int index = 1;
-            for (Object value : fields.values()) {
-                stmt.setObject(index++, value);
-            }
+                stmt.executeUpdate();
 
-            stmt.executeUpdate();
-
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    Long generatedId = generatedKeys.getLong(1);
-
-                    return getById(generatedId).orElse(null);
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        Long generatedId = generatedKeys.getLong(1);
+                        return getById(generatedId).orElse(null);
+                    }
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -170,91 +176,98 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             return Collections.emptyList();
         }
 
-        T firstEntity = iterator.next();
-        Map<String, Object> firstFields = rowUnmapper.apply(firstEntity);
+        try {
+            T firstEntity = iterator.next();
+            Map<String, Object> firstFields = unmapEntity(firstEntity);
+            firstFields.remove("id");
 
-        firstFields.remove("id");
+            String columns = String.join(", ", firstFields.keySet());
+            String placeholders = String.join(", ", firstFields.keySet().stream().map(c -> "?").toList());
+            String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders);
 
-        String columns = String.join(", ", firstFields.keySet());
-        String placeholders = String.join(", ", firstFields.keySet().stream().map(c -> "?").toList());
-        String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders);
+            List<Long> generatedIds = new ArrayList<>();
 
-        List<Long> generatedIds = new ArrayList<>();
+            try (Connection conn = dbManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                conn.setAutoCommit(false);
 
-            conn.setAutoCommit(false);
+                addEntityToBatch(stmt, firstEntity);
 
-            addEntityToBatch(stmt, firstEntity);
-
-            while (iterator.hasNext()) {
-                addEntityToBatch(stmt, iterator.next());
-            }
-
-            stmt.executeBatch();
-
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                while (generatedKeys.next()) {
-                    generatedIds.add(generatedKeys.getLong(1));
+                while (iterator.hasNext()) {
+                    addEntityToBatch(stmt, iterator.next());
                 }
+
+                stmt.executeBatch();
+
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    while (generatedKeys.next()) {
+                        generatedIds.add(generatedKeys.getLong(1));
+                    }
+                }
+
+                conn.commit();
+                conn.setAutoCommit(true);
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return Collections.emptyList();
             }
 
-            conn.commit();
-            conn.setAutoCommit(true);
+            List<T> savedEntities = new ArrayList<>();
+            for (Long id : generatedIds) {
+                getById(id).ifPresent(savedEntities::add);
+            }
 
-        } catch (SQLException e) {
+            return savedEntities;
+
+        } catch (Exception e) {
             e.printStackTrace();
-
-            return Collections.emptyList();
         }
 
-        List<T> savedEntities = new ArrayList<>();
-        for (Long id : generatedIds) {
-            getById(id).ifPresent(savedEntities::add);
-        }
-
-        return savedEntities;
+        return Collections.emptyList();
     }
 
     @Override
     public T update(T newEntity, T entityToUpdate) {
-        // Извлекаем новые данные для обновления
-        Map<String, Object> fields = rowUnmapper.apply(newEntity);
+        try {
+            // Извлекаем новые данные для обновления
+            Map<String, Object> fields = unmapEntity(newEntity);
 
-        // Получаем ID из старого объекта, который мы хотим обновить
-        Map<String, Object> oldFields = rowUnmapper.apply(entityToUpdate);
-        Object idValue = oldFields.get("id");
+            // Получаем ID из старого объекта
+            Map<String, Object> oldFields = unmapEntity(entityToUpdate);
+            Object idValue = oldFields.get("id");
 
-        if (idValue == null) {
-            throw new IllegalArgumentException("Es ist nicht möglich, ein Objekt ohne ID zu aktualisieren");
-        }
-
-        fields.remove("id");
-
-        String setClause = String.join(", ", fields.keySet().stream().map(c -> c + " = ?").toList());
-        String sql = String.format("UPDATE %s SET %s WHERE id = ?", tableName, setClause);
-
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            int index = 1;
-            for (Object value : fields.values()) {
-                stmt.setObject(index++, value);
+            if (idValue == null) {
+                throw new IllegalArgumentException("Es ist nicht möglich, ein Objekt ohne ID zu aktualisieren");
             }
 
-            stmt.setObject(index, idValue);
+            fields.remove("id");
 
-            int rowsAffected = stmt.executeUpdate();
+            String setClause = String.join(", ", fields.keySet().stream().map(c -> c + " = ?").toList());
+            String sql = String.format("UPDATE %s SET %s WHERE id = ?", tableName, setClause);
 
-            if (rowsAffected > 0) {
-                return getById((Long) idValue).orElse(null);
+            try (Connection conn = dbManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                int index = 1;
+                for (Object value : fields.values()) {
+                    stmt.setObject(index++, value);
+                }
+
+                stmt.setObject(index, idValue);
+
+                int rowsAffected = stmt.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    return getById((Long) idValue).orElse(null);
+                }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return null; // Возвращаем null, если обновить не удалось
+        return null;
     }
 
     @Override
@@ -263,32 +276,34 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             return null;
         }
 
-        Map<String, Object> fieldsToUpdate = rowUnmapper.apply(newEntity);
-        fieldsToUpdate.remove("id");
+        try {
+            Map<String, Object> fieldsToUpdate = unmapEntity(newEntity);
+            fieldsToUpdate.remove("id");
 
-        if (fieldsToUpdate.isEmpty()) {
-            return null;
-        }
-
-        String setClause = String.join(", ", fieldsToUpdate.keySet().stream().map(c -> c + " = ?").toList());
-        String sql = String.format("UPDATE %s SET %s WHERE id = ?", tableName, setClause);
-
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            int index = 1;
-            for (Object value : fieldsToUpdate.values()) {
-                stmt.setObject(index++, value);
+            if (fieldsToUpdate.isEmpty()) {
+                return null;
             }
 
-            stmt.setLong(index, id);
+            String setClause = String.join(", ", fieldsToUpdate.keySet().stream().map(c -> c + " = ?").toList());
+            String sql = String.format("UPDATE %s SET %s WHERE id = ?", tableName, setClause);
 
-            int rowsAffected = stmt.executeUpdate();
+            try (Connection conn = dbManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            if (rowsAffected > 0) {
-                return getById(id).orElse(null);
+                int index = 1;
+                for (Object value : fieldsToUpdate.values()) {
+                    stmt.setObject(index++, value);
+                }
+
+                stmt.setLong(index, id);
+
+                int rowsAffected = stmt.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    return getById(id).orElse(null);
+                }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -303,7 +318,7 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
         try {
             @SuppressWarnings("unchecked")
-            Map<String, Object> fields = rowUnmapper.apply((T) entity);
+            Map<String, Object> fields = unmapEntity((T) entity);
             Object idValue = fields.get("id");
 
             if (idValue instanceof Long) {
@@ -311,7 +326,7 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             } else if (idValue instanceof Integer) {
                 deleteById(((Integer) idValue).longValue());
             }
-        } catch (ClassCastException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -340,8 +355,8 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
         }
     }
 
-    private void addEntityToBatch(PreparedStatement stmt, T entity) throws SQLException {
-        Map<String, Object> fields = rowUnmapper.apply(entity);
+    private void addEntityToBatch(PreparedStatement stmt, T entity) throws Exception {
+        Map<String, Object> fields = unmapEntity(entity);
         fields.remove("id");
 
         int index = 1;
@@ -349,5 +364,48 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             stmt.setObject(index++, value);
         }
         stmt.addBatch();
+    }
+
+    private T mapRow(ResultSet rs) throws Exception {
+        T entity = clazz.getDeclaredConstructor().newInstance();
+
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+
+            String javaFieldName = field.getName();
+            String sqlColumnName = javaFieldName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+
+            try {
+                Object value = rs.getObject(sqlColumnName);
+
+                if (value != null) {
+                    if (field.getType() == Long.class && value instanceof Integer) {
+                        field.set(entity, ((Integer) value).longValue());
+                    } else if (field.getType() == UUID.class && value instanceof String) {
+                        field.set(entity, UUID.fromString((String) value));
+                    } else {
+                        field.set(entity, value);
+                    }
+                }
+            } catch (SQLException e) {
+                // Игнорируем поля, которых нет в ResultSet (например, кастомные DTO поля)
+            }
+        }
+        return entity;
+    }
+
+    private Map<String, Object> unmapEntity(T entity) throws Exception {
+        Map<String, Object> fieldsMap = new LinkedHashMap<>();
+
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+
+            String javaFieldName = field.getName();
+            String sqlColumnName = javaFieldName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+
+            fieldsMap.put(sqlColumnName, field.get(entity));
+        }
+
+        return fieldsMap;
     }
 }
