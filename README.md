@@ -19,7 +19,7 @@ This is a complete JavaFX desktop application for managing smart home devices, a
     - Ensure the SQL Server service is running
 
 ## Database Schema Relationships
-[[![device.png](img/device.png)img]]
+![device.png](img/device.png)
 
 ## Project Structure
 
