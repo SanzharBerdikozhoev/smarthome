@@ -62,7 +62,7 @@ public class DBConnection {
         this.port = "1433";
         this.database = "SmarthomeDB";
         this.username = "sa";
-        this.password = "";
+        this.password = "Admin123@";
         this.encrypt = false;
         this.trustServerCertificate = true;
     }
@@ -82,5 +82,40 @@ public class DBConnection {
 
         logger.info("Connecting to database: " + connectionString);
         return DriverManager.getConnection(connectionString, username, password);
+    }
+
+    public void closeConnection() {
+        if (connection != null) {
+            try {
+                connection.close();
+                logger.info("Database connection closed.");
+            } catch (SQLException e) {
+                logger.warning("Error closing database connection: " + e.getMessage());
+            }
+        }
+    }
+
+    public boolean isConnected() {
+        try {
+            return connection != null && !connection.isClosed();
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public String getServer() {
+        return server;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public String getUsername() {
+        return username;
     }
 }
