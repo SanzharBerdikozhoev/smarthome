@@ -6,17 +6,18 @@
 
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="whz.pti.controllers.LoginPageController"
+            fx:controller="whz.pti.controllers.LoginController"
             prefHeight="400.0" prefWidth="600.0">
     <VBox>
-        <Label text="SmarthomeDB"/>
+        <Label styleClass="h1" text="SmarthomeDB"/>
+        <Label styleClass="h3" text="Anmelden"/>
 
-        <Label text="Anmelden"/>
+        <Label styleClass="bold" text="Benutzername"/>
+        <TextField fx:id="usernameField" promptText="Benutzername"/>
 
-        <Label text="Benutzername"/>
-        <TextField promptText="Benutzername"/>
+        <Label styleClass="bold" text="Passwort"/>
+        <TextField fx:id="passwordField" promptText="Passwort"/>
 
-        <Label text="Passwort"/>
-        <TextField promptText="Passwort"/>
+        <Button fx:id="loginButton" text="Login"/>
     </VBox>
 </AnchorPane>
