@@ -1,12 +1,18 @@
 package whz.pti.models;
 
+import whz.pti.repositories.implementation.UserRepoImpl;
+import whz.pti.utils.annotations.Column;
+import whz.pti.utils.annotations.ForeignKey;
+
 import java.math.BigDecimal;
 
 public class Home {
     private Long id;
     private String address;
     private String town;
+    @Column(name = "zipCode")
     private String zipCode;
+    @ForeignKey(column = "user_id", repoClass = UserRepoImpl.class)
     private User user;
 
     public Home() {}

@@ -1,24 +1,41 @@
 package whz.pti.models;
 
+import whz.pti.repositories.implementation.DeviceTypeRepoImpl;
+import whz.pti.repositories.implementation.RoomRepoImpl;
+import whz.pti.repositories.implementation.UserRepoImpl;
+import whz.pti.utils.annotations.ForeignKey;
+import whz.pti.utils.annotations.ManyToMany;
+
 import java.time.LocalDate;
+import java.util.List;
 
 public class Device {
     private Long id;
     private String name;
+    @ForeignKey(column = "room_id", repoClass = RoomRepoImpl.class)
     private Room room;
+    @ForeignKey(column = "device_type_id", repoClass = DeviceTypeRepoImpl.class)
     private DeviceType deviceType;
     private LocalDate installDate;
     private boolean active;
+    @ManyToMany(
+            joinTable     = "device_user",
+            joinColumn    = "device_id",
+            inverseColumn = "user_id",
+            repoClass     = UserRepoImpl.class
+    )
+    private List<User> users;
 
     public Device( ){}
 
-    public Device(Long id, String name, Room room, DeviceType deviceType, LocalDate installDate, boolean active) {
+    public Device(Long id, String name, Room room, DeviceType deviceType, LocalDate installDate, boolean active, List<User> users) {
         this.id = id;
         this.name = name;
         this.room = room;
         this.deviceType = deviceType;
         this.installDate = installDate;
         this.active = active;
+        this.users = users;
     }
 
     public Long getId() {
@@ -67,6 +84,14 @@ public class Device {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = users;
     }
 
     @Override

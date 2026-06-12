@@ -2,6 +2,9 @@ package whz.pti.repositories.implementation;
 
 import whz.pti.repositories.GeneralRepo;
 import whz.pti.utils.DBConnection;
+import whz.pti.utils.annotations.Column;
+import whz.pti.utils.annotations.ForeignKey;
+import whz.pti.utils.annotations.ManyToMany;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -373,7 +376,59 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             field.setAccessible(true);
 
             String javaFieldName = field.getName();
-            String sqlColumnName = javaFieldName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            String sqlColumnName = (columnAnnotation != null)
+                    ? columnAnnotation.name()
+                    : javaFieldName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+
+            ForeignKey fk = field.getAnnotation(ForeignKey.class);
+            if (fk != null) {
+                try {
+                    Object fkValue = rs.getObject(fk.column());
+                    if (fkValue != null) {
+                        Long fkId = fkValue instanceof Integer
+                                ? ((Integer) fkValue).longValue()
+                                : (Long) fkValue;
+
+                        Object relatedInstance =fk.repoClass()
+                                        .getDeclaredConstructor()
+                                        .newInstance();
+                        if (relatedInstance instanceof GeneralRepo<?> relatedRepo) {
+                            relatedRepo.getById(fkId).ifPresent(relate->{
+                                try {
+                                    field.set(entity, relate);
+                                }catch (IllegalAccessException e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    }
+                } catch (SQLException ignored) {}
+                continue;
+            }
+
+            ManyToMany m2m = field.getAnnotation(ManyToMany.class);
+            if (m2m != null) {
+                try {
+                    // получаем id текущей сущности из ResultSet
+                    Object currentId = rs.getObject("id");
+                    if (currentId != null) {
+                        Long currentIdLong = currentId instanceof Integer
+                                ? ((Integer) currentId).longValue()
+                                : (Long) currentId;
+
+                        List<Object> relatedEntities = fetchManyToMany(
+                                m2m.joinTable(),
+                                m2m.joinColumn(),
+                                m2m.inverseColumn(),
+                                m2m.repoClass(),
+                                currentIdLong
+                        );
+                        field.set(entity, relatedEntities);
+                    }
+                } catch (Exception ignored) {}
+                continue;
+            }
 
             try {
                 Object value = rs.getObject(sqlColumnName);
@@ -411,14 +466,71 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
         Map<String, Object> fieldsMap = new LinkedHashMap<>();
 
         for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(ManyToMany.class)) {
+                continue;
+            }
             field.setAccessible(true);
 
+            if (field.isAnnotationPresent(ForeignKey.class)) {
+                ForeignKey fk = field.getAnnotation(ForeignKey.class);
+                Object related = field.get(entity);
+                if (related != null) {
+                    Field idField = related.getClass().getDeclaredField("id");
+                    idField.setAccessible(true);
+                    fieldsMap.put(fk.column(), idField.get(related));
+                } else {
+                    fieldsMap.put(fk.column(), null);
+                }
+                continue;
+            }
+
             String javaFieldName = field.getName();
-            String sqlColumnName = javaFieldName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            String sqlColumnName = (columnAnnotation != null)
+                    ? columnAnnotation.name()
+                    : javaFieldName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
 
             fieldsMap.put(sqlColumnName, field.get(entity));
         }
 
         return fieldsMap;
+    }
+
+    private List<Object> fetchManyToMany(
+            String joinTable,
+            String joinColumn,
+            String inverseColumn,
+            Class<?> repoClass,
+            Long currentId
+    ) {
+        List<Object> result = new ArrayList<>();
+
+        String sql = String.format(
+                "SELECT %s FROM %s WHERE %s = ?",
+                inverseColumn, joinTable, joinColumn
+        );
+
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, currentId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                // создаём репо один раз
+                Object repoInstance = repoClass.getDeclaredConstructor().newInstance();
+
+                if (repoInstance instanceof GeneralRepo<?> relatedRepo) {
+                    while (rs.next()) {
+                        Long relatedId = rs.getLong(1);
+                        relatedRepo.getById(relatedId).ifPresent(result::add);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 }

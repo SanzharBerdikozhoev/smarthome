@@ -1,10 +1,15 @@
 package whz.pti.models;
 
+import whz.pti.utils.annotations.Column;
+
 public class User {
     private Long id;
+
+    @Column(name = "username")
     private String name;
     private String email;
     private Role role;
+    @Column(name = "password_hash")
     private String password;
 
     public User() {}

@@ -7,7 +7,7 @@ import whz.pti.utils.PasswordService;
 
 
 public class AuthServiceImpl implements AuthService {
-    private UserRepo userRepo = new UserRepoImpl("users");
+    private UserRepo userRepo = new UserRepoImpl();
 
     @Override
     public void register(String username, String password) {
