@@ -3,10 +3,10 @@ package whz.pti.controllers;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import whz.pti.services.LoginService;
+import whz.pti.services.AuthService;
 
 public class LoginController {
-    private LoginService loginService;
+    private AuthService loginService;
 
     @FXML private TextField usernameField;
     @FXML private TextField passwordField;

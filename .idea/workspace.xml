@@ -5,11 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3c29f7fe-edf5-4d21-a286-b6ad3d087146" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/whz/pti/repositories/implementation/GeneralRepoImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/whz/pti/controllers/LoginController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/whz/pti/controllers/LoginController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/config.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/view/LoginPage.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/view/LoginPage.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/whz/pti/repositories/GeneralRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/whz/pti/repositories/GeneralRepo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/whz/pti/repositories/implementation/UserRepoImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/whz/pti/repositories/implementation/UserRepoImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/whz/pti/services/LoginService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/whz/pti/services/AuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/whz/pti/services/implementation/LoginServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/whz/pti/services/implementation/AuthServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/fxml/login.fxml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,8 +59,8 @@
   }
 }]]></component>
   <component name="RunManager">
-    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="whz.pti.Main" />
+    <configuration name="Launcher" type="Application" factoryName="Application" temporary="true">
+      <option name="MAIN_CLASS_NAME" value="Launcher" />
       <module name="smarthome" />
       <extension name="coverage">
         <pattern>
@@ -71,7 +74,7 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.Main" />
+        <item itemvalue="Application.Launcher" />
       </list>
     </recent_temporary>
   </component>
