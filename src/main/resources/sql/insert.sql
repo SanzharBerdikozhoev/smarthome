@@ -1,4 +1,4 @@
-USE SmarthomeDB;
+-- USE SmarthomeDB;
 
 --------------------------------------------------
 -- USERS

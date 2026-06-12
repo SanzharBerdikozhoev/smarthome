@@ -1,27 +1,25 @@
 package whz.pti.models;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 public class Scenario {
-    private BigDecimal id;
+    private Long id;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
     private Scenario() {}
 
-    public Scenario(BigDecimal id, LocalDateTime startTime, LocalDateTime endTime) {
+    public Scenario(Long id, LocalDateTime startTime, LocalDateTime endTime) {
         this.id = id;
         this.startTime = startTime;
         this.endTime = endTime;
     }
 
-    public BigDecimal getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

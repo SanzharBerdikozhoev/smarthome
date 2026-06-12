@@ -1,14 +1,12 @@
 package whz.pti.models;
 
-import java.math.BigDecimal;
-
 public class DeviceScenario {
     private Device device;
     private Scenario scenario;
 
     public DeviceScenario() {}
 
-    public DeviceScenario(BigDecimal id, Device device, Scenario scenario) {
+    public DeviceScenario(Long id, Device device, Scenario scenario) {
         this.device = device;
         this.scenario = scenario;
     }

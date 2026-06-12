@@ -1,11 +1,9 @@
 package whz.pti.models;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 public class DeviceStateLog {
-    private BigDecimal id;
+    private Long id;
     private Device device;
     private LocalDateTime time;
     private String state;
@@ -13,7 +11,7 @@ public class DeviceStateLog {
 
     public DeviceStateLog() {}
 
-    public DeviceStateLog(BigDecimal id, Device device, LocalDateTime time, String state, User user) {
+    public DeviceStateLog(Long id, Device device, LocalDateTime time, String state, User user) {
         this.id = id;
         this.device = device;
         this.time = time;
@@ -21,11 +19,11 @@ public class DeviceStateLog {
         this.user = user;
     }
 
-    public BigDecimal getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

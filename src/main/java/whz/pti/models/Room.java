@@ -1,9 +1,7 @@
 package whz.pti.models;
 
-import java.math.BigDecimal;
-
 public class Room {
-    private BigDecimal id;
+    private Long id;
     private String name;
     private String floor;
     private double square;
@@ -11,7 +9,7 @@ public class Room {
 
     public Room() {}
 
-    public Room(BigDecimal id, String name, String floor, double square, House house) {
+    public Room(Long id, String name, String floor, double square, House house) {
         this.id = id;
         this.name = name;
         this.floor = floor;
@@ -19,11 +17,11 @@ public class Room {
         this.house = house;
     }
 
-    public BigDecimal getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

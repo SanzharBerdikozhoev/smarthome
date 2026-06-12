@@ -1,4 +1,4 @@
-use SmarthomeDB;
+-- use SmarthomeDB;
 
 CREATE TABLE users
 (

@@ -383,12 +383,25 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
                         field.set(entity, ((Integer) value).longValue());
                     } else if (field.getType() == UUID.class && value instanceof String) {
                         field.set(entity, UUID.fromString((String) value));
+                    } else if (field.getType().isEnum() && value instanceof String) {
+                        @SuppressWarnings("unchecked")
+                        Class<Enum> enumType = (Class<Enum>) field.getType();
+
+                        String dbValue = ((String) value).toUpperCase().trim();
+
+                        try {
+                            Enum enumValue = Enum.valueOf(enumType, dbValue);
+                            field.set(entity, enumValue);
+                        } catch (IllegalArgumentException e) {
+                            System.err.println("Warnung: Unbekannter Enum-Wert in DB: " + dbValue + " für Feld " + javaFieldName);
+                            field.set(entity, null);
+                        }
                     } else {
                         field.set(entity, value);
                     }
                 }
             } catch (SQLException e) {
-                // Игнорируем поля, которых нет в ResultSet (например, кастомные DTO поля)
+
             }
         }
         return entity;

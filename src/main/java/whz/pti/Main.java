@@ -17,7 +17,7 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         try{
-            testDatabaseConnection();
+//            testDatabaseConnection();
             AnchorPane startPage = (AnchorPane) FXMLLoader.load(
                     getClass().getResource("/view/LoginPage.fxml")
             );
@@ -32,17 +32,17 @@ public class Main extends Application {
     }
 
 
-    private void testDatabaseConnection() {
-        try {
-            DBConnection dbConnection = DBConnection.getInstance();
-            dbConnection.getConnection();
-            logger.info("Database connection successful");
-        } catch (Exception e) {
-            logger.warning("Database connection test failed: " + e.getMessage());
-            System.err.println("WARNING: Could not connect to database. Make sure SmarthomeDB is created and accessible.");
-            e.printStackTrace();
-        }
-    }
+//    private void testDatabaseConnection() {
+//        try {
+//            DBConnection dbConnection = DBConnection.getInstance();
+//            dbConnection.getConnection();
+//            logger.info("Database connection successful");
+//        } catch (Exception e) {
+//            logger.warning("Database connection test failed: " + e.getMessage());
+//            System.err.println("WARNING: Could not connect to database. Make sure SmarthomeDB is created and accessible.");
+//            e.printStackTrace();
+//        }
+//    }
 
 
     public static void main(String[] args) {

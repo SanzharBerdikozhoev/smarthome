@@ -1,14 +1,12 @@
 package whz.pti.models;
 
-import java.math.BigDecimal;
-
 public class DeviceUser {
     private Device device;
     private User user;
 
     private DeviceUser() {}
 
-    public DeviceUser(BigDecimal id, Device device, User user) {
+    public DeviceUser(Long id, Device device, User user) {
         this.device = device;
         this.user = user;
     }

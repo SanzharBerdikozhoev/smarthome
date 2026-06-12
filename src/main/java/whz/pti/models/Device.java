@@ -1,10 +1,9 @@
 package whz.pti.models;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Device {
-    private BigDecimal id;
+    private Long id;
     private String name;
     private Room room;
     private DeviceType deviceType;
@@ -13,7 +12,7 @@ public class Device {
 
     public Device( ){}
 
-    public Device(BigDecimal id, String name, Room room, DeviceType deviceType, LocalDate installDate, boolean active) {
+    public Device(Long id, String name, Room room, DeviceType deviceType, LocalDate installDate, boolean active) {
         this.id = id;
         this.name = name;
         this.room = room;
@@ -22,11 +21,11 @@ public class Device {
         this.active = active;
     }
 
-    public BigDecimal getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

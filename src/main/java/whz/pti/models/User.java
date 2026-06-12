@@ -1,9 +1,7 @@
 package whz.pti.models;
 
-import java.math.BigDecimal;
-
 public class User {
-    private BigDecimal id;
+    private Long id;
     private String name;
     private String email;
     private Role role;
@@ -11,7 +9,7 @@ public class User {
 
     public User() {}
 
-    public User(BigDecimal id, String name, String email, Role role, String password) {
+    public User(Long id, String name, String email, Role role, String password) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -19,11 +17,11 @@ public class User {
         this.password = password;
     }
 
-    public BigDecimal getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
