@@ -1,27 +1,29 @@
 package whz.pti.models;
 
+import java.math.BigDecimal;
+
 public class Room {
-    private Long id;
+    private BigDecimal id;
     private String name;
     private String floor;
     private double square;
-    private House house;
+    private Home home;
 
     public Room() {}
 
-    public Room(Long id, String name, String floor, double square, House house) {
+    public Room(BigDecimal id, String name, String floor, double square, Home home) {
         this.id = id;
         this.name = name;
         this.floor = floor;
         this.square = square;
-        this.house = house;
+        this.home = home;
     }
 
-    public Long getId() {
+    public BigDecimal getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(BigDecimal id) {
         this.id = id;
     }
 
@@ -49,12 +51,12 @@ public class Room {
         this.square = square;
     }
 
-    public House getHouse() {
-        return house;
+    public Home getHouse() {
+        return home;
     }
 
-    public void setHouse(House house) {
-        this.house = house;
+    public void setHouse(Home home) {
+        this.home = home;
     }
 
     @Override
@@ -64,7 +66,7 @@ public class Room {
                 ", name='" + name + '\'' +
                 ", floor='" + floor + '\'' +
                 ", square=" + square +
-                ", house=" + house +
+                ", home=" + home +
                 '}';
     }
 }

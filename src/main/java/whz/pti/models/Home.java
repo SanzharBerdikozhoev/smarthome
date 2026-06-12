@@ -1,16 +1,17 @@
 package whz.pti.models;
 
+import java.math.BigDecimal;
 
-public class House {
+public class Home {
     private Long id;
     private String address;
     private String town;
     private String zipCode;
     private User user;
 
-    public House() {}
+    public Home() {}
 
-    public House(Long id, String address, String town, String zipCode, User user) {
+    public Home(Long id, String address, String town, String zipCode, User user) {
         this.id = id;
         this.address = address;
         this.town = town;
@@ -61,7 +62,7 @@ public class House {
     @Override
     public String
     toString() {
-        return "House{" +
+        return "Home{" +
                 "id=" + id +
                 ", address='" + address + '\'' +
                 ", town='" + town + '\'' +
