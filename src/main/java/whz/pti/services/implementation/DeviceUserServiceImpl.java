@@ -28,13 +28,8 @@ public class DeviceUserServiceImpl implements DeviceUserService {
     }
 
     @Override
-    public Optional<DeviceUser> getDeviceUserById(Long deviceUserId) throws SQLException {
+    public Optional<DeviceUser> getDeviceUser(Long deviceUserId) throws SQLException {
         return deviceUserRepo.getById(deviceUserId);
-    }
-
-    @Override
-    public DeviceUser getDeviceUserByName(String deviceUserName) {
-        return null;
     }
 
     @Override

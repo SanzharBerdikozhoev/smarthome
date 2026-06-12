@@ -28,7 +28,7 @@ public class DeviceTypeServiceImpl implements DeviceTypeService {
     }
 
     @Override
-    public Optional<DeviceType> getDeviceTypeById(Long deviceTypeId) throws SQLException {
+    public Optional<DeviceType> getDeviceType(Long deviceTypeId) throws SQLException {
         return deviceTypeRepo.getById(deviceTypeId);
     }
 

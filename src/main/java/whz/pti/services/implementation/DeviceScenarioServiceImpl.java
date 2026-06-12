@@ -33,11 +33,6 @@ public class DeviceScenarioServiceImpl implements DeviceScenarioService {
     }
 
     @Override
-    public DeviceScenario getDeviceScenarioByName(String deviceScenarioName) {
-        return null;
-    }
-
-    @Override
     public List<DeviceScenario> getDeviceScenarios() {
         return (List<DeviceScenario>) deviceScenarioRepo.getAll();
     }

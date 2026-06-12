@@ -28,13 +28,8 @@ public class ScenarioServiceImpl implements ScenarioService {
     }
 
     @Override
-    public Optional<Scenario> getScenarioById(Long scenarioId) throws SQLException {
+    public Optional<Scenario> getScenario(Long scenarioId) throws SQLException {
         return scenarioRepo.getById(scenarioId);
-    }
-
-    @Override
-    public Scenario getScenarioByName(String scenarioName) {
-        return null;
     }
 
     @Override

@@ -10,7 +10,6 @@ public interface ScenarioService {
     void save(Scenario scenario);
     void update(Scenario newScenario, Scenario oldScenario);
     void delete(Scenario scenario);
-    Optional<Scenario> getScenarioById(Long scenarioId) throws SQLException;
-    Scenario getScenarioByName(String scenarioName);
+    Optional<Scenario> getScenario(Long scenarioId) throws SQLException;
     List<Scenario> getScenarios();
 }

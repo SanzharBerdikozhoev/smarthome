@@ -11,6 +11,5 @@ public interface DeviceScenarioService {
     void update(DeviceScenario newDeviceScenario, DeviceScenario oldDeviceScenario);
     void delete(DeviceScenario deviceScenario);
     Optional<DeviceScenario> getDeviceScenario(Long deviceScenarioId) throws SQLException;
-    DeviceScenario getDeviceScenarioByName(String deviceScenarioName);
     List<DeviceScenario> getDeviceScenarios();
 }
