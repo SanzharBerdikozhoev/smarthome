@@ -32,7 +32,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public Room getRoomByName(String name) {
+    public Room getRoomByName(String roomName) {
         return null;
     }
 
