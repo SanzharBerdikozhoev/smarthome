@@ -1,16 +1,17 @@
 package whz.pti.models;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 public class Scenario {
     private BigDecimal id;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
     private Scenario() {}
 
-    public Scenario(BigDecimal id, LocalTime startTime, LocalTime endTime) {
+    public Scenario(BigDecimal id, LocalDateTime startTime, LocalDateTime endTime) {
         this.id = id;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -24,19 +25,19 @@ public class Scenario {
         this.id = id;
     }
 
-    public LocalTime getStartTime() {
+    public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(LocalTime startTime) {
+    public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 
-    public LocalTime getEndTime() {
+    public LocalDateTime getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(LocalTime endTime) {
+    public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
     }
 
