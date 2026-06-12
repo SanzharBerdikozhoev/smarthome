@@ -1,5 +1,17 @@
 use SmarthomeDB;
 
+CREATE TABLE users
+(
+    id            INT PRIMARY KEY IDENTITY (1,1),
+    username      VARCHAR(50)  NOT NULL UNIQUE,
+    email         VARCHAR(100) NOT NULL UNIQUE,
+    role          VARCHAR(20)  NOT NULL DEFAULT 'Reader',
+    password_hash VARCHAR(255) NOT NULL,
+    created_at    DATETIME     NOT NULL DEFAULT GETDATE(),
+
+    CONSTRAINT ck_user_role
+        CHECK (role IN ('Reader', 'ReadWriter', 'Admin'))
+);
 
 CREATE TABLE home
 (
@@ -56,18 +68,7 @@ CREATE TABLE device
             ON DELETE CASCADE
 );
 
-CREATE TABLE users
-(
-    id            INT PRIMARY KEY IDENTITY (1,1),
-    username      VARCHAR(50)  NOT NULL UNIQUE,
-    email         VARCHAR(100) NOT NULL UNIQUE,
-    role          VARCHAR(20)  NOT NULL DEFAULT 'Reader',
-    password_hash VARCHAR(255) NOT NULL,
-    created_at    DATETIME     NOT NULL DEFAULT GETDATE(),
 
-    CONSTRAINT ck_user_role
-        CHECK (role IN ('Reader', 'ReadWriter', 'Admin'))
-);
 
 CREATE TABLE device_state_log
 (
@@ -84,8 +85,7 @@ CREATE TABLE device_state_log
 
     CONSTRAINT fk_state_log_users
         FOREIGN KEY (user_id)
-            REFERENCES users (id)
-            ON DELETE CASCADE,
+            REFERENCES users (id),
 
     CONSTRAINT ck_state_value
         CHECK (state_value IN ('ON', 'OFF', 'STANDBY'))
@@ -97,7 +97,7 @@ CREATE TABLE scenario
     device_id  VARCHAR(100) NOT NULL UNIQUE,
     is_active  BIT          NOT NULL DEFAULT 1,
     start_time TIME         NOT NULL,
-    end_time   TIME         NOT NULL,
+    end_time   TIME         NOT NULL
 );
 
 
@@ -112,12 +112,12 @@ CREATE TABLE device_user
     CONSTRAINT fk_device_user_device
         FOREIGN KEY (device_id)
             REFERENCES device (id)
-            ON DELETE CASCADE,
+            ON DELETE NO ACTION ,
 
     CONSTRAINT fk_device_user_user
         FOREIGN KEY (user_id)
             REFERENCES users (id)
-            ON DELETE CASCADE,
+            ON DELETE NO ACTION
 );
 
 CREATE TABLE device_scenario
