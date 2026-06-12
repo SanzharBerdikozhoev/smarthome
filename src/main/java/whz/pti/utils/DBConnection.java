@@ -47,7 +47,7 @@ public class DBConnection {
                 this.port = properties.getProperty("db.port", "1433");
                 this.database = properties.getProperty("db.database", "SmarthomeDB");
                 this.username = properties.getProperty("db.username", "sa");
-                this.password = properties.getProperty("db.password", "");
+                this.password = properties.getProperty("db.password", "Admin1234");
                 this.encrypt = Boolean.parseBoolean(properties.getProperty("db.encrypt", "false"));
                 this.trustServerCertificate = Boolean.parseBoolean(properties.getProperty("db.trustServerCertificate", "true"));
             }
