@@ -407,28 +407,28 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
                 continue;
             }
 
-            ManyToMany m2m = field.getAnnotation(ManyToMany.class);
-            if (m2m != null) {
-                try {
-                    // получаем id текущей сущности из ResultSet
-                    Object currentId = rs.getObject("id");
-                    if (currentId != null) {
-                        Long currentIdLong = currentId instanceof Integer
-                                ? ((Integer) currentId).longValue()
-                                : (Long) currentId;
-
-                        List<Object> relatedEntities = fetchManyToMany(
-                                m2m.joinTable(),
-                                m2m.joinColumn(),
-                                m2m.inverseColumn(),
-                                m2m.repoClass(),
-                                currentIdLong
-                        );
-                        field.set(entity, relatedEntities);
-                    }
-                } catch (Exception ignored) {}
-                continue;
-            }
+//            ManyToMany m2m = field.getAnnotation(ManyToMany.class);
+//            if (m2m != null) {
+//                try {
+//                    // получаем id текущей сущности из ResultSet
+//                    Object currentId = rs.getObject("id");
+//                    if (currentId != null) {
+//                        Long currentIdLong = currentId instanceof Integer
+//                                ? ((Integer) currentId).longValue()
+//                                : (Long) currentId;
+//
+//                        List<Object> relatedEntities = fetchManyToMany(
+//                                m2m.joinTable(),
+//                                m2m.joinColumn(),
+//                                m2m.inverseColumn(),
+//                                m2m.repoClass(),
+//                                currentIdLong
+//                        );
+//                        field.set(entity, relatedEntities);
+//                    }
+//                } catch (Exception ignored) {}
+//                continue;
+//            }
 
             try {
                 Object value = rs.getObject(sqlColumnName);
@@ -451,6 +451,12 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
                             System.err.println("Warnung: Unbekannter Enum-Wert in DB: " + dbValue + " für Feld " + javaFieldName);
                             field.set(entity, null);
                         }
+                    } else if (field.getType() == java.time.LocalTime.class && value instanceof java.sql.Time) {
+                        field.set(entity, ((java.sql.Time) value).toLocalTime());
+                    } else if (field.getType() == java.time.LocalDateTime.class && value instanceof java.sql.Timestamp) {
+                        field.set(entity, ((java.sql.Timestamp) value).toLocalDateTime());
+                    } else if (field.getType() == java.time.LocalDate.class && value instanceof java.sql.Date) {
+                        field.set(entity, ((java.sql.Date) value).toLocalDate());
                     } else {
                         field.set(entity, value);
                     }

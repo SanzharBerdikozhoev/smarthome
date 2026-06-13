@@ -34,6 +34,6 @@ public class ScenarioServiceImpl implements ScenarioService {
 
     @Override
     public List<Scenario> getScenarios() {
-        return (List<Scenario>)  scenarioRepo.getAll();
+        return (List<Scenario>) scenarioRepo.getAll();
     }
 }

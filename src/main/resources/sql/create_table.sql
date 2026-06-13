@@ -112,7 +112,7 @@ CREATE TABLE device_user
     CONSTRAINT fk_device_user_device
         FOREIGN KEY (device_id)
             REFERENCES device (id)
-            ON DELETE NO ACTION ,
+            ON DELETE NO ACTION,
 
     CONSTRAINT fk_device_user_user
         FOREIGN KEY (user_id)

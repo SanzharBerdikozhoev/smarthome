@@ -26,7 +26,7 @@ public class Scenario {
     )
     private List<Device> devices;
 
-    private Scenario() {}
+    public Scenario() {}
 
     public Scenario(Long id, String deviceName, Boolean isActive ,LocalTime startTime, LocalTime endTime, List<Device> devices) {
         this.id = id;
