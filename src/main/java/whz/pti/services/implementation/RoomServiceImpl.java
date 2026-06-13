@@ -40,4 +40,10 @@ public class RoomServiceImpl implements RoomService {
     public List<Room> getRooms() {
         return (List<Room>) roomRepo.getAll();
     }
+
+    @Override
+    public List<Room> getRoomsByHouseId(Long houseId) {
+        if (houseId == null) return new java.util.ArrayList<>();
+        return roomRepo.getRoomsByHouseId(houseId);
+    }
 }

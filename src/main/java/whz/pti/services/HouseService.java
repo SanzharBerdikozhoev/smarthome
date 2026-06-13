@@ -13,4 +13,5 @@ public interface HouseService {
     Optional<Home> getHouse(Long houseId) throws SQLException;
     Home getHouseByName(String houseName);
     List<Home> getHouses();
+    List<Home> getHousesByUserId(Long userId);
 }

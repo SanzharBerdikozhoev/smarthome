@@ -13,4 +13,5 @@ public interface RoomService {
     Optional<Room> getRoom(Long roomId) throws SQLException;
     Room getRoomByName(String roomName);
     List<Room> getRooms();
+    List<Room> getRoomsByHouseId(Long houseId);
 }

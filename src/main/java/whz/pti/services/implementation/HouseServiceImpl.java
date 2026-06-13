@@ -40,4 +40,10 @@ public class HouseServiceImpl implements HouseService {
     public List<Home> getHouses() {
         return (List<Home>) houseRepo.getAll();
     }
+
+    @Override
+    public List<Home> getHousesByUserId(Long userId) {
+        if (userId == null) return new java.util.ArrayList<>();
+        return houseRepo.getHousesByUserId(userId);
+    }
 }
