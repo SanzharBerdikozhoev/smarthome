@@ -1,3 +1,4 @@
-.idea
+.idea/*
 target
 src/main/resources/config.properties
+smarthome.iml

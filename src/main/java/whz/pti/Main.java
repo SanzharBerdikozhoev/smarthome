@@ -22,8 +22,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Optional<Home> home = houseService.getHouse(1L);
-        System.out.println(home.get());
+//        Optional<Home> home = houseService.getHouse(1L);
+//        System.out.println(home.get());
 
         try{
             testDatabaseConnection();

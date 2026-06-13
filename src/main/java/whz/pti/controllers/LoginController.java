@@ -8,11 +8,13 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import whz.pti.services.AuthService;
+import whz.pti.services.implementation.AuthServiceImpl;
+import whz.pti.utils.UserSession;
 
 import java.io.IOException;
 
 public class LoginController {
-    private AuthService loginService;
+    private AuthService authService = new AuthServiceImpl();
 
     @FXML private TextField usernameField;
     @FXML private TextField passwordField;
@@ -20,17 +22,18 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-        loginButton.setOnAction(e -> navigateToHomePage());
-//        loginButton.setOnAction(e -> handleLogin(
-//                usernameField, passwordField
-//        ));
+        loginButton.setOnAction(e -> handleLogin(
+                usernameField, passwordField
+        ));
     }
 
     private void handleLogin(TextField username, TextField password) {
-        loginService.login(
+        UserSession.currentUserId = authService.login(
                 username.getText(),
                 password.getText()
         );
+
+        navigateToHomePage();
     }
 
 

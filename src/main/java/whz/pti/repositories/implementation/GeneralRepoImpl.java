@@ -139,7 +139,7 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
     public T save(T entity) {
         try {
             Map<String, Object> fields = unmapEntity(entity);
-            fields.remove("id"); // Первичный ключ генерируется в БД (IDENTITY)
+            fields.remove("id");
 
             String columns = String.join(", ", fields.keySet());
             String placeholders = String.join(", ", fields.keySet().stream().map(c -> "?").toList());
@@ -151,7 +151,7 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
                 int index = 1;
                 for (Object value : fields.values()) {
-                    stmt.setObject(index++, value);
+                    setStatementValue(stmt, index++, value);
                 }
 
                 stmt.executeUpdate();
@@ -234,10 +234,8 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
     @Override
     public T update(T newEntity, T entityToUpdate) {
         try {
-            // Извлекаем новые данные для обновления
             Map<String, Object> fields = unmapEntity(newEntity);
 
-            // Получаем ID из старого объекта
             Map<String, Object> oldFields = unmapEntity(entityToUpdate);
             Object idValue = oldFields.get("id");
 
@@ -255,10 +253,10 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
                 int index = 1;
                 for (Object value : fields.values()) {
-                    stmt.setObject(index++, value);
+                    setStatementValue(stmt, index++, value);
                 }
 
-                stmt.setObject(index, idValue);
+                setStatementValue(stmt, index, idValue);
 
                 int rowsAffected = stmt.executeUpdate();
 
@@ -295,7 +293,7 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
                 int index = 1;
                 for (Object value : fieldsToUpdate.values()) {
-                    stmt.setObject(index++, value);
+                    setStatementValue(stmt, index++, value);
                 }
 
                 stmt.setLong(index, id);
@@ -364,9 +362,35 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
         int index = 1;
         for (Object value : fields.values()) {
-            stmt.setObject(index++, value);
+            setStatementValue(stmt, index++, value);
         }
         stmt.addBatch();
+    }
+
+    private void setStatementValue(PreparedStatement stmt, int index, Object value) throws SQLException {
+        if (value == null) {
+            stmt.setObject(index, null);
+        } else if (value instanceof String stringValue) {
+            stmt.setString(index, stringValue);
+        } else if (value instanceof Long longValue) {
+            stmt.setLong(index, longValue);
+        } else if (value instanceof Integer integerValue) {
+            stmt.setInt(index, integerValue);
+        } else if (value instanceof Boolean booleanValue) {
+            stmt.setBoolean(index, booleanValue);
+        } else if (value instanceof Enum<?> enumValue) {
+            stmt.setString(index, enumValue.name());
+        } else if (value instanceof java.time.LocalDate localDateValue) {
+            stmt.setDate(index, java.sql.Date.valueOf(localDateValue));
+        } else if (value instanceof java.time.LocalDateTime localDateTimeValue) {
+            stmt.setTimestamp(index, java.sql.Timestamp.valueOf(localDateTimeValue));
+        } else if (value instanceof java.time.LocalTime localTimeValue) {
+            stmt.setTime(index, java.sql.Time.valueOf(localTimeValue));
+        } else if (value instanceof UUID uuidValue) {
+            stmt.setString(index, uuidValue.toString());
+        } else {
+            stmt.setObject(index, value);
+        }
     }
 
     private T mapRow(ResultSet rs) throws Exception {

@@ -10,15 +10,25 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepo userRepo = new UserRepoImpl();
 
     @Override
-    public void register(String username, String password) {
-        PasswordService.hashPassword(password);
+    public void register(User newUser) {
+        boolean userExists = userRepo.getByField("email", newUser.getEmail()).isPresent();
+        if(userExists) {
+            throw new RuntimeException("Benutzer existiert bereits");
+        }
+
+        String hashedPassword = PasswordService.hashPassword(newUser.getPassword());
+        newUser.setPassword(hashedPassword);
+
+        userRepo.save(newUser);
     }
 
     @Override
-    public Long login(String username, String password) {
+    public Long login(String username, String password) throws RuntimeException {
         User user = userRepo
                 .getByField("username", username)
-                .orElseThrow(()-> new NullPointerException("Benutzername oder Passwort falsch"));
+                .orElseThrow(()-> new RuntimeException("Benutzername oder Passwort falsch"));
+
+        System.out.println(user);
 
         boolean passwordMatch = PasswordService.verifyPassword(password, user.getPassword());
 
