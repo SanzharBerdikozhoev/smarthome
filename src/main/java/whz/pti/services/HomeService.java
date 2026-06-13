@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-public interface HouseService {
+public interface HomeService {
     void save(Home home);
     void update(Home newHome, Home oldHome);
     void delete(Home home);

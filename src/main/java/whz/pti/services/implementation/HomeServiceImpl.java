@@ -3,13 +3,13 @@ package whz.pti.services.implementation;
 import whz.pti.models.Home;
 import whz.pti.repositories.HouseRepo;
 import whz.pti.repositories.implementation.HouseRepoImpl;
-import whz.pti.services.HouseService;
+import whz.pti.services.HomeService;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-public class HouseServiceImpl implements HouseService {
+public class HomeServiceImpl implements HomeService {
     private HouseRepo houseRepo = new HouseRepoImpl();
     @Override
     public void save(Home home) {

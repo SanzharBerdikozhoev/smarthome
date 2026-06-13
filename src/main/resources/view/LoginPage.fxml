@@ -1,23 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
-
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
+<?import javafx.scene.layout.Region?>
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="whz.pti.controllers.LoginController"
-            prefHeight="400.0" prefWidth="600.0">
-    <VBox>
-        <Label styleClass="h1" text="SmarthomeDB"/>
-        <Label styleClass="h3" text="Anmelden"/>
+            fx:controller="whz.pti.controllers.LoginPageController"
+            prefHeight="400.0" prefWidth="600.0"
+            styleClass="login-container"
+>
+    <stylesheets>
+        <URL value="@../styles/LoginPage.css"/>
+    </stylesheets>
 
-        <Label styleClass="bold" text="Benutzername"/>
-        <TextField fx:id="usernameField" promptText="Benutzername"/>
+    <Label styleClass="h1, text-centered" maxWidth="Infinity" text="Smarthome"/>
 
-        <Label styleClass="bold" text="Passwort"/>
-        <TextField fx:id="passwordField" promptText="Passwort"/>
+    <VBox styleClass="login-form"
+          AnchorPane.leftAnchor="200.0"
+          AnchorPane.rightAnchor="200.0"
+          AnchorPane.bottomAnchor="100.0"
+          AnchorPane.topAnchor="100.0"
+          spacing="4"
+    >
+        <Label styleClass="login-header"
+               maxWidth="Infinity"
+               text="Anmelden"/>
 
-        <Button fx:id="loginButton" text="Login"/>
+        <Region prefHeight="40.0"/>
+
+        <Label styleClass="fs-20"
+               text="Benutzername"/>
+        <TextField styleClass="login-input"
+                fx:id="usernameField"
+                   promptText="Benutzername"/>
+
+        <Region prefHeight="15.0"/>
+        <Label styleClass="fs-20"
+               text="Passwort"/>
+        <PasswordField styleClass="login-input"
+                fx:id="passwordField"
+                   promptText="Passwort"
+        />
+
+        <Region prefHeight="15.0"/>
+        <Button styleClass="login-button"
+                fx:id="loginButton"
+                text="Login"/>
+
+        <Region prefHeight="20.0"/>
+        <Label styleClass="red, fs-20"
+                fx:id="errorMessage"/>
     </VBox>
 </AnchorPane>

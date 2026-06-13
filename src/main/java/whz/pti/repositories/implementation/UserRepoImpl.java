@@ -5,9 +5,7 @@ import whz.pti.repositories.UserRepo;
 
 
 public class UserRepoImpl extends GeneralRepoImpl<User> implements UserRepo {
-
     public UserRepoImpl() {
         super("users");
     }
-
 }

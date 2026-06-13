@@ -1,10 +1,9 @@
 package whz.pti.repositories;
 
-import java.sql.SQLException;
 import java.util.Optional;
 
 public interface GeneralRepo<T> {
-    public Optional<T> getById(Long id) throws SQLException;
+    public Optional<T> getById(Long id);
     public Optional<T> getByField(String field, Object value);
     public Iterable<T> getAll();
     public Iterable<T> getPage(int from, int size);

@@ -54,7 +54,6 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
 
     @Override
     public Optional<T> getByField(String field, Object value) {
-        // Конвертируем имя поля Java в snake_case на случай, если передан camelCase
         String sqlColumn = field.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
         String sql = String.format("SELECT * FROM %s WHERE %s = ?", tableName, sqlColumn);
 
@@ -112,7 +111,6 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
         List<T> resultList = new ArrayList<>();
         int offset = (page - 1) * pageSize;
 
-        // В MS SQL Server для смещения обязательно использовать ORDER BY
         String sql = String.format("SELECT * FROM %s ORDER BY id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY", tableName);
 
         try (Connection conn = dbManager.getConnection();
@@ -431,29 +429,6 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
                 continue;
             }
 
-//            ManyToMany m2m = field.getAnnotation(ManyToMany.class);
-//            if (m2m != null) {
-//                try {
-//                    // получаем id текущей сущности из ResultSet
-//                    Object currentId = rs.getObject("id");
-//                    if (currentId != null) {
-//                        Long currentIdLong = currentId instanceof Integer
-//                                ? ((Integer) currentId).longValue()
-//                                : (Long) currentId;
-//
-//                        List<Object> relatedEntities = fetchManyToMany(
-//                                m2m.joinTable(),
-//                                m2m.joinColumn(),
-//                                m2m.inverseColumn(),
-//                                m2m.repoClass(),
-//                                currentIdLong
-//                        );
-//                        field.set(entity, relatedEntities);
-//                    }
-//                } catch (Exception ignored) {}
-//                continue;
-//            }
-
             try {
                 Object value = rs.getObject(sqlColumnName);
 
@@ -546,7 +521,6 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             stmt.setLong(1, currentId);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                // создаём репо один раз
                 Object repoInstance = repoClass.getDeclaredConstructor().newInstance();
 
                 if (repoInstance instanceof GeneralRepo<?> relatedRepo) {

@@ -1,5 +1,6 @@
 package whz.pti.services.implementation;
 
+import whz.pti.models.SafeUser;
 import whz.pti.models.User;
 import whz.pti.repositories.UserRepo;
 import whz.pti.repositories.implementation.UserRepoImpl;
@@ -23,19 +24,33 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Long login(String username, String password) throws RuntimeException {
+    public SafeUser login(String username, String password) throws Exception {
         User user = userRepo
                 .getByField("username", username)
-                .orElseThrow(()-> new RuntimeException("Benutzername oder Passwort falsch"));
+                .orElseThrow(()-> new Exception("Benutzername oder Passwort falsch"));
 
         System.out.println(user);
 
         boolean passwordMatch = PasswordService.verifyPassword(password, user.getPassword());
 
         if(!passwordMatch) {
-            throw new RuntimeException("Benutzername oder Passwort falsch");
+            throw new Exception("Benutzername oder Passwort falsch");
         }
 
-        return user.getId();
+        return new SafeUser(user.getId(), user.getName(), user.getEmail(), user.getRole());
     }
+
+//    @Override
+//    public SafeUser getUser(Long userId) {
+//        Optional<User> result = userRepo.getById(userId);
+//        SafeUser user = new SafeUser();
+//
+//        result.ifPresent(u -> {
+//            user.setName(u.getName());
+//            user.setEmail(u.getEmail());
+//            user.setRole(u.getRole());
+//        });
+//
+//        return user;
+//    }
 }

@@ -7,24 +7,25 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import whz.pti.models.SafeUser;
 import whz.pti.services.AuthService;
-import whz.pti.services.implementation.AuthServiceImpl;
+import whz.pti.utils.AlertHelper;
+import whz.pti.utils.AppContext;
 import whz.pti.utils.UserSession;
 
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class LoginController {
-    private AuthService authService = new AuthServiceImpl();
+public class LoginPageController {
+    private final AuthService authService = AppContext.getInstance().getAuthService();
 
     @FXML
     private TextField usernameField;
     @FXML
-    private TextField passwordField;
+    private PasswordField passwordField;
     @FXML
     private Button loginButton;
     @FXML
@@ -60,18 +61,25 @@ public class LoginController {
 
         if(!valid) return;
 
-        UserSession.currentUserId = authService.login(
-                username.getText(),
-                password.getText()
-        );
+        SafeUser currentUser;
 
+        try {
+            currentUser = authService.login(
+                    username.getText(),
+                    password.getText()
+            );
+        } catch (Exception e) {
+            AlertHelper.error("Fehler bei Anmeldung", e.getMessage());
+            return;
+        }
+
+        UserSession.setSession(currentUser);
         navigateToHomePage();
     }
 
-
     private void navigateToHomePage() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/homePage.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/HomePage.fxml"));
             Parent root = loader.load();
 
             Stage stage = (Stage) loginButton.getScene().getWindow();
@@ -84,7 +92,7 @@ public class LoginController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Fehler beim Laden von homePage.fxml");
+            System.err.println("Fehler beim Laden von HomePage.fxml");
         }
     }
 }

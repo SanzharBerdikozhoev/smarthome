@@ -1,0 +1,69 @@
+.h1 {
+    -fx-font-weight: bold;
+    -fx-font-size: 64px;
+}
+
+.h3 {
+    -fx-font-weight: bold;
+    -fx-font-size: 32px;
+}
+
+.fs-32 {
+    -fx-font-size: 32px;
+}
+
+.fs-20 {
+    -fx-font-size: 20px;
+}
+
+.red {
+    -fx-text-fill: red;
+}
+
+.bold {
+    -fx-font-weight: bold;
+}
+
+.text-centered {
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+}
+
+.login-header {
+    -fx-font-weight: bold;
+    -fx-font-size: 32px;
+    -fx-alignment: center
+}
+
+.login-container {
+    -fx-background-color: #353535;
+}
+
+.login-form {
+    -fx-padding: 60px 180px 20px 180px;
+    -fx-background-radius: 16px;
+    -fx-background-color: white;
+}
+
+.login-input {
+    -fx-font-size: 20px;
+    -fx-padding: 16px;
+    -fx-background-radius: 6px;
+}
+
+.login-button {
+    -fx-font-size: 20px;
+    -fx-padding: 16px;
+    -fx-background-color: #007bff;
+    /*-fx-alignment: center;*/
+    -fx-text-fill: white;
+    -fx-background-radius: 10px;
+    -fx-pref-width: 200px;
+}
+
+.login-button:hover {
+    -fx-background-color: #0056b3;
+}
+
+
+
