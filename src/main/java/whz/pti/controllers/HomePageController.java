@@ -1,9 +1,6 @@
 package whz.pti.controllers;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -12,13 +9,10 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.TilePane;
-import javafx.stage.Stage;
 import whz.pti.models.Scenario;
 import whz.pti.services.ScenarioService;
 import whz.pti.utils.AppContext;
-import whz.pti.utils.UserSession;
 
-import java.io.IOException;
 import java.util.List;
 
 public class HomePageController {
@@ -43,28 +37,6 @@ public class HomePageController {
     @FXML
     public void initialize() {
         loadAndRenderScenarios();
-
-        logoutButton.setOnAction(e -> handleLogout());
-    }
-
-    private void handleLogout() {
-        UserSession.clearSession();
-
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/LoginPage.fxml"));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) logoutButton.getScene().getWindow();
-
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-
-            stage.centerOnScreen();
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Fehler beim Laden von LoginPage.fxml");
-        }
     }
 
     private void loadAndRenderScenarios() {
@@ -96,10 +68,6 @@ public class HomePageController {
             System.err.println("Fehler beim Laden der Szenarien aus der Datenbank!");
             e.printStackTrace();
         }
-    }
-
-    private void setUserStatusLabel() {
-
     }
 
     private void handleScenarioClick(Scenario scenario, Button button) {

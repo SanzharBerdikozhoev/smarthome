@@ -15,9 +15,9 @@ import whz.pti.models.SafeUser;
 import whz.pti.services.AuthService;
 import whz.pti.utils.AlertHelper;
 import whz.pti.utils.AppContext;
+import whz.pti.utils.PageSwitcher;
 import whz.pti.utils.UserSession;
 
-import java.io.IOException;
 
 public class LoginPageController {
     private final AuthService authService = AppContext.getInstance().getAuthService();
@@ -70,29 +70,14 @@ public class LoginPageController {
             );
         } catch (Exception e) {
             AlertHelper.error("Fehler bei Anmeldung", e.getMessage());
+
+            username.clear();
+            password.clear();
+
             return;
         }
 
         UserSession.setSession(currentUser);
-        navigateToHomePage();
-    }
-
-    private void navigateToHomePage() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/HomePage.fxml"));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) loginButton.getScene().getWindow();
-
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-
-            stage.centerOnScreen();
-            stage.show();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Fehler beim Laden von HomePage.fxml");
-        }
+        PageSwitcher.switchTo("HomePage", loginButton);
     }
 }

@@ -3,13 +3,12 @@ package whz.pti.utils;
 import whz.pti.models.Role;
 import whz.pti.models.User;
 import whz.pti.services.AuthService;
-import whz.pti.services.implementation.AuthServiceImpl;
 
 import java.util.List;
 
 public class UserInitializer {
     public static void init() {
-        AuthService authService = new AuthServiceImpl();
+        AuthService authService = AppContext.getInstance().getAuthService();
 
         List<User> users = List.of(
            new User("admin", "admin@smarthome.com", Role.ADMIN, "admin123"),

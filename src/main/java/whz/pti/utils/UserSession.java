@@ -1,5 +1,6 @@
 package whz.pti.utils;
 
+import whz.pti.models.Role;
 import whz.pti.models.SafeUser;
 import whz.pti.services.AuthService;
 
@@ -21,6 +22,12 @@ public class UserSession {
     public static void clearSession() {
         currentUser = null;
         currentUserId = -1L;
+    }
+
+    public static boolean isAdmin() {
+        if(currentUser == null) return false;
+        if (currentUser.getRole() == null) return false;
+        return currentUser.getRole() == Role.ADMIN;
     }
 
     public static SafeUser getCurrentUser() {

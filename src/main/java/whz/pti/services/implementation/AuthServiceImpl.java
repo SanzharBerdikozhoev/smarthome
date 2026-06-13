@@ -3,12 +3,15 @@ package whz.pti.services.implementation;
 import whz.pti.models.SafeUser;
 import whz.pti.models.User;
 import whz.pti.repositories.UserRepo;
-import whz.pti.repositories.implementation.UserRepoImpl;
 import whz.pti.services.AuthService;
 import whz.pti.utils.PasswordService;
 
 public class AuthServiceImpl implements AuthService {
-    private final UserRepo userRepo = new UserRepoImpl();
+    private final UserRepo userRepo;
+
+    public AuthServiceImpl(UserRepo userRepo) {
+        this.userRepo = userRepo;
+    }
 
     @Override
     public void register(User newUser) {

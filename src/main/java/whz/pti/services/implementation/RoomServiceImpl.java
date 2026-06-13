@@ -10,7 +10,12 @@ import java.util.List;
 import java.util.Optional;
 
 public class RoomServiceImpl implements RoomService {
-    private RoomRepo roomRepo = new RoomRepoImpl();
+    private final RoomRepo roomRepo;
+
+    public RoomServiceImpl(RoomRepo roomRepo) {
+        this.roomRepo = roomRepo;
+    }
+
     @Override
     public void save(Room room) {
         roomRepo.save(room);

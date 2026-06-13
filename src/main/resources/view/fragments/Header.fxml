@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<?import java.net.URL?>
+<HBox
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        fx:controller="whz.pti.controllers.HeaderController"
+        alignment="CENTER_RIGHT"
+        fillHeight="false"
+        styleClass="header-container"
+        focusTraversable="true"
+        spacing="10"
+>
+    <stylesheets>
+        <URL value="@../../styles/Header.css"/>
+    </stylesheets>
+
+    <Label styleClass="header-title"
+           text="Smarthome"/>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <Button fx:id="homePageButton"
+            styleClass="header-link"
+            text="Startseite"/>
+
+    <Button fx:id="tablePanelButton"
+            styleClass="header-link"
+            text="Tabellen-Steuerfeld"/>
+
+    <Label fx:id="userStatusLabel"
+           text="Angemeldet als: "/>
+
+    <Region maxWidth="20.0"/>
+
+    <Button fx:id="logoutButton"
+            mnemonicParsing="false"
+            text="Abmelden"/>
+</HBox>

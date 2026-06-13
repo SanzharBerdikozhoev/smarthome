@@ -4,7 +4,6 @@ import whz.pti.repositories.implementation.DeviceRepoImpl;
 import whz.pti.utils.annotations.Column;
 import whz.pti.utils.annotations.ManyToMany;
 
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 

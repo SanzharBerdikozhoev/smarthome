@@ -1,69 +1,58 @@
-.h1 {
-    -fx-font-weight: bold;
-    -fx-font-size: 64px;
-}
-
-.h3 {
-    -fx-font-weight: bold;
-    -fx-font-size: 32px;
-}
-
-.fs-32 {
-    -fx-font-size: 32px;
-}
-
 .fs-20 {
-    -fx-font-size: 20px;
+    -fx-font-size: 16px;
 }
 
-.red {
-    -fx-text-fill: red;
+* {
+    -fx-text-fill: #34495e;
 }
 
-.bold {
+/*.login-container {*/
+/*    -fx-background-color: #34495e;*/
+/*}*/
+
+.login-logo {
     -fx-font-weight: bold;
-}
-
-.text-centered {
-    -fx-text-alignment: center;
+    -fx-font-size: 48px;
     -fx-alignment: center;
+    -fx-text-alignment: center;
 }
 
 .login-header {
     -fx-font-weight: bold;
     -fx-font-size: 32px;
-    -fx-alignment: center
-}
-
-.login-container {
-    -fx-background-color: #353535;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
 }
 
 .login-form {
     -fx-padding: 60px 180px 20px 180px;
     -fx-background-radius: 16px;
     -fx-background-color: white;
+    -fx-border-radius: 16px;
 }
 
 .login-input {
-    -fx-font-size: 20px;
+    -fx-font-size: 16px;
     -fx-padding: 16px;
     -fx-background-radius: 6px;
 }
 
 .login-button {
-    -fx-font-size: 20px;
+    -fx-font-size: 16px;
     -fx-padding: 16px;
-    -fx-background-color: #007bff;
-    /*-fx-alignment: center;*/
+    -fx-background-color: #34495e;
     -fx-text-fill: white;
     -fx-background-radius: 10px;
     -fx-pref-width: 200px;
 }
 
 .login-button:hover {
-    -fx-background-color: #0056b3;
+    -fx-background-color: #233445;
 }
 
+.login-error {
+    -fx-font-size: 16px;
+    -fx-text-fill: red;
+}
 
 

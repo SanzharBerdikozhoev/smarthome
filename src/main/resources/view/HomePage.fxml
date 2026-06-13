@@ -14,26 +14,14 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import java.net.URL?>
 <BorderPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: #f4f4f9;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="whz.pti.controllers.HomePageController">
+    <stylesheets>
+        <URL value="@../styles/HomePage.css"/>
+    </stylesheets>
 
     <top>
-        <HBox alignment="CENTER_RIGHT" prefHeight="50.0" style="-fx-background-color: #ffffff; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);" BorderPane.alignment="CENTER">
-            <children>
-                <Label fx:id="userStatusLabel" text="Angemeldet als: Ivan (Admin)">
-                    <HBox.margin>
-                        <Insets right="20.0" />
-                    </HBox.margin>
-                    <font>
-                        <Font name="System Bold" size="13.0" />
-                    </font>
-                </Label>
-                <Button fx:id="logoutButton" mnemonicParsing="false" style="-fx-background-color: #e74c3c; -fx-text-fill: white;" text="Abmelden">
-                    <HBox.margin>
-                        <Insets right="20.0" />
-                    </HBox.margin>
-                </Button>
-            </children>
-        </HBox>
+        <fx:include fx:id="header" source="./fragments/Header.fxml"/>
     </top>
 
     <left>

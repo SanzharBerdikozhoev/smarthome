@@ -2,7 +2,6 @@ package whz.pti.services.implementation;
 
 import whz.pti.models.Device;
 import whz.pti.repositories.DeviceRepo;
-import whz.pti.repositories.implementation.DeviceRepoImpl;
 import whz.pti.services.DeviceService;
 
 import java.sql.SQLException;
@@ -10,7 +9,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class DeviceServiceImpl implements DeviceService {
-    private DeviceRepo deviceRepo = new DeviceRepoImpl();
+    private final DeviceRepo deviceRepo;
+
+    public DeviceServiceImpl(DeviceRepo deviceRepo) {
+        this.deviceRepo = deviceRepo;
+    }
 
     @Override
     public void save(Device device) {

@@ -1,0 +1,31 @@
+.header-container {
+    -fx-background-color: #ffffff;
+    -fx-pref-height: 70px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.header-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+    -fx-text-fill: #34495e;
+}
+
+.header-link {
+    -fx-background-color: #34495e;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-background-radius: 3px;
+}
+
+#userStatusLabel {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+#logoutButton {
+    -fx-font-size: 16px;
+    -fx-background-radius: 3px;
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+}

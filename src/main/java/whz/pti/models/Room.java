@@ -1,16 +1,14 @@
 package whz.pti.models;
 
-import whz.pti.repositories.implementation.HouseRepoImpl;
+import whz.pti.repositories.implementation.HomeRepoImpl;
 import whz.pti.utils.annotations.ForeignKey;
-
-import java.math.BigDecimal;
 
 public class Room {
     private Long id;
     private String name;
     private String floor;
     private double square;
-    @ForeignKey(column = "home_id", repoClass = HouseRepoImpl.class)
+    @ForeignKey(column = "home_id", repoClass = HomeRepoImpl.class)
     private Home home;
 
     public Room() {}

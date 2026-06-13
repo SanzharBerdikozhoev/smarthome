@@ -1,12 +1,10 @@
 package whz.pti.repositories.implementation;
 
 import whz.pti.models.Home;
-import whz.pti.repositories.HouseRepo;
+import whz.pti.repositories.HomeRepo;
 
-import java.util.List;
-
-public class HouseRepoImpl extends GeneralRepoImpl<Home> implements HouseRepo {
-    public HouseRepoImpl() {
+public class HomeRepoImpl extends GeneralRepoImpl<Home> implements HomeRepo {
+    public HomeRepoImpl() {
         super();
     }
 
