@@ -13,4 +13,5 @@ public interface DeviceService {
     Optional<Device> getDevice(Long deviceId) throws SQLException;
     Device getDeviceByName(String deviceName);
     List<Device> getDevices();
+    List<Device> getDevicesByRoomId(Long roomId);
 }

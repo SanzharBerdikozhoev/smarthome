@@ -4,6 +4,7 @@ import whz.pti.repositories.implementation.DeviceTypeRepoImpl;
 import whz.pti.repositories.implementation.RoomRepoImpl;
 import whz.pti.repositories.implementation.ScenarioRepoImpl;
 import whz.pti.repositories.implementation.UserRepoImpl;
+import whz.pti.utils.annotations.Column;
 import whz.pti.utils.annotations.ForeignKey;
 import whz.pti.utils.annotations.ManyToMany;
 
@@ -18,6 +19,7 @@ public class Device {
     @ForeignKey(column = "device_type_id", repoClass = DeviceTypeRepoImpl.class)
     private DeviceType deviceType;
     private LocalDate installDate;
+    @Column(name = "is_active")
     private boolean active;
     @ManyToMany(
             joinTable     = "device_user",

@@ -41,4 +41,10 @@ public class DeviceServiceImpl implements DeviceService {
     public List<Device> getDevices() {
         return (List<Device>)  deviceRepo.getAll();
     }
+
+    @Override
+    public List<Device> getDevicesByRoomId(Long roomId) {
+        if (roomId == null) return new java.util.ArrayList<>();
+        return deviceRepo.getDevicesByRoomId(roomId);
+    }
 }
