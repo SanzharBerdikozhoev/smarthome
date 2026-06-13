@@ -24,10 +24,6 @@ public final class AlertHelper {
             cancelButton.setText("Abbrechen");
         }
 
-        dialogPane.getStylesheets().add(
-                AlertHelper.class.getResource(
-                        "/application/view/static/application.css").toExternalForm());
-
         return alert.showAndWait();
     }
 
