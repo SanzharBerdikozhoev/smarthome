@@ -5,7 +5,7 @@ import whz.pti.repositories.HomeRepo;
 
 public class HomeRepoImpl extends GeneralRepoImpl<Home> implements HomeRepo {
     public HomeRepoImpl() {
-        super();
+        super("home");
     }
 
     @Override

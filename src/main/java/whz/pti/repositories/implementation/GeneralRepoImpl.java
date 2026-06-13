@@ -90,9 +90,10 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
         List<T> resultList = new ArrayList<>();
         String sql = String.format("SELECT * FROM %s", tableName);
 
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+        try (
+                Connection conn = dbManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 resultList.add(mapRow(rs));
@@ -412,20 +413,21 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
                                 ? ((Integer) fkValue).longValue()
                                 : (Long) fkValue;
 
-                        Object relatedInstance =fk.repoClass()
-                                        .getDeclaredConstructor()
-                                        .newInstance();
+                        Object relatedInstance = fk.repoClass()
+                                .getDeclaredConstructor()
+                                .newInstance();
                         if (relatedInstance instanceof GeneralRepo<?> relatedRepo) {
-                            relatedRepo.getById(fkId).ifPresent(relate->{
+                            relatedRepo.getById(fkId).ifPresent(relate -> {
                                 try {
                                     field.set(entity, relate);
-                                }catch (IllegalAccessException e) {
+                                } catch (IllegalAccessException e) {
                                     e.printStackTrace();
                                 }
                             });
                         }
                     }
-                } catch (SQLException ignored) {}
+                } catch (SQLException ignored) {
+                }
                 continue;
             }
 

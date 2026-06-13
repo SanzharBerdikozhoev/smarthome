@@ -12,7 +12,7 @@ VALUES
 --------------------------------------------------
 -- HOMES
 --------------------------------------------------
-INSERT INTO home (address, town, zipCode, user_id)
+INSERT INTO home (address, town, zip_code, user_id)
 VALUES
     ('Main Street 10', 'Berlin', '10115', 2),
     ('Park Avenue 25', 'Munich', '80331', 3);

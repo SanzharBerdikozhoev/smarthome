@@ -67,11 +67,15 @@ public class DBConnection {
         this.trustServerCertificate = true;
     }
 
+//    public Connection getConnection() throws SQLException {
+//        if (connection == null || connection.isClosed()) {
+//            connection = createConnection();
+//        }
+//        return connection;
+//    }
+
     public Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = createConnection();
-        }
-        return connection;
+        return createConnection();
     }
 
     private Connection createConnection() throws SQLException {

@@ -42,9 +42,9 @@ public class TablePanelPageController {
     public void initialize() {
         applyPermissions();
 
-        if(UserSession.isAdmin()) {
-            tables.add("Users");
-        }
+//        if(UserSession.isAdmin()) {
+//            tables.add("Users");
+//        }
 
         tables.add("Room");
         tables.add("Home");

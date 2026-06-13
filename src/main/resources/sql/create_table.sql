@@ -18,7 +18,7 @@ CREATE TABLE home
     id      INT PRIMARY KEY IDENTITY (1,1),
     address VARCHAR(150) NOT NULL,
     town    VARCHAR(150) NOT NULL,
-    zipCode VARCHAR(5)   NOT NULL,
+    zip_code VARCHAR(5)   NOT NULL,
     user_id INT          NOT NULL,
 
     CONSTRAINT fk_home_user
@@ -68,8 +68,6 @@ CREATE TABLE device
             ON DELETE CASCADE
 );
 
-
-
 CREATE TABLE device_state_log
 (
     id          INT PRIMARY KEY IDENTITY (1,1),
@@ -99,7 +97,6 @@ CREATE TABLE scenario
     start_time TIME         NOT NULL,
     end_time   TIME         NOT NULL
 );
-
 
 CREATE TABLE device_user
 (
