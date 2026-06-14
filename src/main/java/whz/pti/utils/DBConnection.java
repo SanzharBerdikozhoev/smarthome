@@ -1,21 +1,20 @@
 package whz.pti.utils;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-
 public class DBConnection {
     private static final Logger logger = Logger.getLogger(DBConnection.class.getName());
-
     private static DBConnection instance;
-    private Connection connection;
+    private final HikariDataSource dataSource;
 
-    // Config parameters
     private String server;
     private String port;
     private String database;
@@ -26,6 +25,7 @@ public class DBConnection {
 
     private DBConnection() {
         loadProperties();
+        this.dataSource = createDataSource();
     }
 
     public static synchronized DBConnection getInstance() {
@@ -67,59 +67,43 @@ public class DBConnection {
         this.trustServerCertificate = true;
     }
 
-    public Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = createConnection();
-        }
-        return connection;
-    }
-
-//        public Connection getConnection() throws SQLException {
-//            return createConnection();
-//        }
-
-    private Connection createConnection() throws SQLException {
+    private HikariDataSource createDataSource() {
         String connectionString = String.format(
                 "jdbc:sqlserver://%s:%s;databaseName=%s;encrypt=%b;trustServerCertificate=%b",
                 server, port, database, encrypt, trustServerCertificate
         );
 
-        logger.info("Connecting to database: " + connectionString);
-        return DriverManager.getConnection(connectionString, username, password);
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(connectionString);
+        config.setUsername(username);
+        config.setPassword(password);
+        config.setMaximumPoolSize(10);
+        config.setMinimumIdle(2);
+        config.setConnectionTimeout(30000);
+        config.setIdleTimeout(600000);
+        config.setMaxLifetime(1800000);
+
+        logger.info("Initializing connection pool: " + connectionString);
+        return new HikariDataSource(config);
+    }
+
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
     }
 
     public void closeConnection() {
-        if (connection != null) {
-            try {
-                connection.close();
-                logger.info("Database connection closed.");
-            } catch (SQLException e) {
-                logger.warning("Error closing database connection: " + e.getMessage());
-            }
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            logger.info("Connection pool closed.");
         }
     }
 
     public boolean isConnected() {
-        try {
-            return connection != null && !connection.isClosed();
-        } catch (SQLException e) {
-            return false;
-        }
+        return dataSource != null && !dataSource.isClosed();
     }
 
-    public String getServer() {
-        return server;
-    }
-
-    public String getPort() {
-        return port;
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public String getUsername() {
-        return username;
-    }
+    public String getServer() { return server; }
+    public String getPort() { return port; }
+    public String getDatabase() { return database; }
+    public String getUsername() { return username; }
 }

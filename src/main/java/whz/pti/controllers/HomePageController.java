@@ -185,8 +185,6 @@ public class HomePageController {
                     .getSelectionModel()
                     .selectFirst();
 
-            loadDevices(rooms.get(0).getId());
-            loadLogs(rooms.get(0).getId());
         }
     }
 
