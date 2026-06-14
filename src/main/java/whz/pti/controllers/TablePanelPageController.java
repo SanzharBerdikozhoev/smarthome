@@ -21,17 +21,17 @@ public class TablePanelPageController {
     @FXML
     private ListView<String> tablesListView;
     @FXML
-    private Label lblCurrentTableName;
+    private Label labelCurrentTableName;
     @FXML
     private TableView<Object> genericTable;
     @FXML
     private HBox actionButtonsContainer;
     @FXML
-    private Button btnAdd;
+    private Button buttonAdd;
     @FXML
-    private Button btnEdit;
+    private Button buttonEdit;
     @FXML
-    private Button btnDelete;
+    private Button buttonDelete;
 
     private final ObservableList<String> tables = FXCollections.observableArrayList();
 
@@ -59,7 +59,7 @@ public class TablePanelPageController {
 
         tablesListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                lblCurrentTableName.setText("Tabelle: " + newVal);
+                labelCurrentTableName.setText("Tabelle: " + newVal);
                 AppContext context = AppContext.getInstance();
 
                 switch (newVal) {
@@ -81,9 +81,9 @@ public class TablePanelPageController {
         boolean isAdmin = UserSession.isAdmin();
 
         actionButtonsContainer.setVisible(isAdmin);
-        btnAdd.setDisable(!isAdmin);
-        btnEdit.setDisable(!isAdmin);
-        btnDelete.setDisable(!isAdmin);
+        buttonAdd.setDisable(!isAdmin);
+        buttonEdit.setDisable(!isAdmin);
+        buttonDelete.setDisable(!isAdmin);
     }
 
     @SuppressWarnings("unchecked")

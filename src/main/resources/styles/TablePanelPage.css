@@ -1,0 +1,53 @@
+.action-button {
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+    -fx-font-size: 16px;
+}
+
+#buttonAdd {
+    -fx-background-color: #2ecc71;
+}
+
+#buttonEdit {
+    -fx-background-color: #3498db;
+}
+
+#buttonDelete {
+    -fx-background-color: #e74c3c;
+}
+
+.panel-title {
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+}
+
+#tablesListView {
+    -fx-background-color: #34495e;
+    -fx-background-radius: 5;
+    -fx-text-fill: white;
+}
+
+#labelCurrentTableName {
+    -fx-font-size: 20px;
+    -fx-text-fill: #2c3e50;
+}
+
+#genericTable {
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-color: #dcdde1;
+}
+
+.panel-container {
+    -fx-background-color: #f4f6f9;
+}
+
+.panel-sidebar {
+    -fx-background-color: #2c3e50;
+    -fx-padding: 15;
+}
+
+.panel-table-list {
+    padding: 20;
+}
