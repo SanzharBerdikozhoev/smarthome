@@ -22,7 +22,7 @@ public class HomeRepoImpl extends GeneralRepoImpl<Home> implements HomeRepo {
                     home.setId(rs.getLong("id"));
                     home.setAddress(rs.getString("address"));
                     home.setTown(rs.getString("town"));
-                    home.setZipCode(rs.getString("zipCode"));
+                    home.setZipCode(rs.getString("zip_code"));
                     houses.add(home);
                 }
             }

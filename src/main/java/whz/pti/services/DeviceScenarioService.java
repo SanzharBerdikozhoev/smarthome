@@ -12,4 +12,5 @@ public interface DeviceScenarioService {
     void delete(DeviceScenario deviceScenario);
     Optional<DeviceScenario> getDeviceScenario(Long deviceScenarioId) throws SQLException;
     List<DeviceScenario> getDeviceScenarios();
+    List<DeviceScenario> getByScenarioId(Long scenarioId);
 }

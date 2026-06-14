@@ -31,12 +31,13 @@ public class ScenarioRepoImpl extends GeneralRepoImpl<Scenario> implements Scena
                 while (rs.next()) {
                     Scenario scenario = new Scenario(
                             rs.getLong("id"),
-                            rs.getString("device_id"),
+                            rs.getString("name"),
                             rs.getBoolean("is_active"),
                             rs.getTime("start_time").toLocalTime(),
                             rs.getTime("end_time").toLocalTime(),
                             new ArrayList<>()
                     );
+                    scenario.setDescription(rs.getString("description"));
                     scenarios.add(scenario);
                 }
             }

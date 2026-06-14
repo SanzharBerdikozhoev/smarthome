@@ -112,11 +112,18 @@ public class HomePageController {
         Optional<User> device = authService.getUser(user_id);
         return device.get().getName();
     }
+
     private void loadAndRenderScenarios() {
         scenariosContainer.getChildren().clear();
 
         try {
-            List<Scenario> scenarios = scenarioService.getScenarios();
+            Long currentUserId = UserSession.getCurrentUserId();
+            if (currentUserId == null) {
+                System.err.println("User is not logged in!");
+                return;
+            }
+
+            List<Scenario> scenarios = scenarioService.getScenariosByUserId(currentUserId);
 
             if (scenarios.isEmpty()) {
                 Label noScenariosLabel = new Label("Keine Szenarien verfügbar");
@@ -126,7 +133,7 @@ public class HomePageController {
             }
 
             for (Scenario scenario : scenarios) {
-                String displayName = scenario.getDeviceName() != null ? scenario.getDeviceName() : "Szenario #" + scenario.getId();
+                String displayName = scenario.getName() != null ? scenario.getName() : "Szenario #" + scenario.getId();
 
                 Button scenarioButton = new Button("▶ " + displayName);
 
@@ -300,16 +307,46 @@ public class HomePageController {
 
         return card;
     }
-    private void handleScenarioClick(Scenario scenario, Button button) {
-        boolean newStatus = !scenario.getIsActive();
+
+
+    private void handleScenarioClick(
+            Scenario scenario,
+            Button button
+    )
+    {
+        boolean newStatus =
+                !scenario.getIsActive();
+
         scenario.setIsActive(newStatus);
 
-        scenarioService.update(scenario, scenario);
+        scenarioService.update(
+                scenario,
+                scenario
+        );
+
+        Long currentUserId =
+                UserSession.getCurrentUserId();
+
+        scenarioService.executeScenario(
+                scenario,
+                currentUserId
+        );
 
         setButtonStyle(button, newStatus);
 
-        System.out.println("Szenario '" + scenario.getDeviceName() + "' ist jetzt: " + (newStatus ? "AKTIV" : "INAKTIV"));
+        Room room =
+                roomListView
+                        .getSelectionModel()
+                        .getSelectedItem();
+
+        if (room != null) {
+
+            loadDevices(room.getId());
+
+            loadLogs(room.getId());
+        }
     }
+
 
     private void setButtonStyle(Button button, boolean isActive) {
         if (isActive) {
