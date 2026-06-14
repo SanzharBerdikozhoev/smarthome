@@ -13,18 +13,23 @@ import whz.pti.utils.UserSession;
 import whz.pti.utils.annotations.ForeignKey;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TablePanelPageController {
-    @FXML private ListView<String> tablesListView;
-    @FXML private Label labelCurrentTableName;
-    @FXML private TableView<Object> genericTable;
-    @FXML private HBox actionButtonsContainer;
-    @FXML private Button buttonAdd;
-    @FXML private Button buttonEdit;
-    @FXML private Button buttonDelete;
+    @FXML
+    private ListView<String> tablesListView;
+    @FXML
+    private Label labelCurrentTableName;
+    @FXML
+    private TableView<Object> genericTable;
+    @FXML
+    private HBox actionButtonsContainer;
+    @FXML
+    private Button buttonAdd;
+    @FXML
+    private Button buttonEdit;
+    @FXML
+    private Button buttonDelete;
 
     private final ObservableList<String> tables = FXCollections.observableArrayList();
     private GeneralRepo<Object> currentRepo;
@@ -74,7 +79,7 @@ public class TablePanelPageController {
         this.currentRepo = (GeneralRepo<Object>) repo;
         this.currentClass = entityClass;
 
-        genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        genericTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         genericTable.getColumns().clear();
         genericTable.getItems().clear();
 
@@ -102,6 +107,27 @@ public class TablePanelPageController {
                 column.setStyle("-fx-alignment: CENTER;");
             }
 
+            Class<?> fieldType = field.getType();
+            if (fieldType == boolean.class || fieldType == Boolean.class) {
+                column.setCellFactory(tc -> new TableCell<Object, Object>() {
+                    @Override
+                    protected void updateItem(Object item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                        } else {
+                            if (item instanceof String && "-".equals(item)) {
+                                setText("-");
+                            } else if (item instanceof Boolean) {
+                                setText((boolean) item ? "Yes" : "No");
+                            } else {
+                                setText(item.toString());
+                            }
+                        }
+                    }
+                });
+            }
+
             genericTable.getColumns().add(column);
         }
 
@@ -109,9 +135,21 @@ public class TablePanelPageController {
         genericTable.setItems(FXCollections.observableArrayList(data));
 
         javafx.application.Platform.runLater(() -> {
-            for (TableColumn<Object, ?> col : genericTable.getColumns()) {
+            ObservableList<TableColumn<Object, ?>> columns = genericTable.getColumns();
+            if (columns.isEmpty()) return;
+
+            for (int i = 0; i < columns.size(); i++) {
+                TableColumn<Object, ?> col = columns.get(i);
+
                 autoFitColumnWidth(col);
+                double textWidth = col.getPrefWidth();
+
+                col.setMinWidth(textWidth);
+                col.setMaxWidth(Double.MAX_VALUE);
             }
+
+            genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+            genericTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         });
     }
 
@@ -128,7 +166,8 @@ public class TablePanelPageController {
                     double cellW = t.getLayoutBounds().getWidth() + 25.0;
                     if (cellW > maxW) maxW = cellW;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         column.setPrefWidth(maxW);
     }
@@ -143,13 +182,18 @@ public class TablePanelPageController {
 
         VBox form = new VBox(10);
         form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
-        Map<Field, Control> fieldsMap = new HashMap<>(); // Используем абстрактный Control
+        Map<Field, Control> fieldsMap = new HashMap<>();
+
+        List<Field> keyFields = determineKeyFields(currentClass);
+        boolean hasSingleId = keyFields.size() == 1 && keyFields.get(0).getName().equalsIgnoreCase("id");
 
         for (Field field : currentClass.getDeclaredFields()) {
-            if (field.getName().equalsIgnoreCase("id") || field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
+            if (hasSingleId && field.getName().equalsIgnoreCase("id")) {
+                continue;
+            }
 
             Label label = new Label(field.getName() + ":");
-            Control inputControl = createInputControlForField(field, null); // Создаем нужный инпут
+            Control inputControl = createInputControlForField(field, null);
 
             form.getChildren().addAll(label, inputControl);
             fieldsMap.put(field, inputControl);
@@ -163,13 +207,19 @@ public class TablePanelPageController {
                     Object newEntity = currentClass.getDeclaredConstructor().newInstance();
                     fillEntityFromForm(newEntity, fieldsMap);
 
-                    Object savedObject = currentRepo.save(newEntity);
-                    if (savedObject != null) {
-                        genericTable.getItems().add(savedObject);
-                        loadTable(currentRepo, currentClass);
+                    try {
+                        currentRepo.save(newEntity);
+                    } catch (Exception e) {
+                        if (!hasSingleId && e.getMessage() != null && e.getMessage().contains("id")) {
+                            System.out.println("Ложное исключение генерации ID успешно проигнорировано для " + currentClass.getSimpleName());
+                        } else {
+                            throw e;
+                        }
                     }
+
+                    loadTable(currentRepo, currentClass);
                 } catch (Exception e) {
-                    showErrorAlert("Fehler beim Speichern der Daten: " + e.getMessage());
+                    showErrorAlert("Fehler beim Speichern: " + e.getMessage());
                 }
             }
         });
@@ -184,6 +234,9 @@ public class TablePanelPageController {
             return;
         }
 
+        List<Field> keyFields = determineKeyFields(currentClass);
+        boolean hasSingleId = keyFields.size() == 1 && keyFields.get(0).getName().equalsIgnoreCase("id");
+
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Eintrag bearbeiten in " + currentClass.getSimpleName());
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -192,17 +245,22 @@ public class TablePanelPageController {
         form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
         Map<Field, Control> fieldsMap = new HashMap<>();
 
+        Map<Field, Object> oldKeyValues = new HashMap<>();
+
         try {
-            Object idValue = null;
+            Object singleIdValue = null;
 
             for (Field field : currentClass.getDeclaredFields()) {
-                if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
                 field.setAccessible(true);
                 Object currentValue = field.get(selectedItem);
 
-                if (field.getName().equalsIgnoreCase("id")) {
-                    idValue = currentValue;
+                if (hasSingleId && field.getName().equalsIgnoreCase("id")) {
+                    singleIdValue = currentValue;
                     continue;
+                }
+
+                if (!hasSingleId && keyFields.contains(field)) {
+                    oldKeyValues.put(field, currentValue);
                 }
 
                 Label label = new Label(field.getName() + ":");
@@ -213,20 +271,50 @@ public class TablePanelPageController {
             }
 
             dialog.getDialogPane().setContent(form);
-            final Object finalId = idValue;
+            final Object finalId = singleIdValue;
 
             dialog.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.OK && finalId != null) {
+                if (response == ButtonType.OK) {
                     try {
                         Object updatedEntity = currentClass.getDeclaredConstructor().newInstance();
                         fillEntityFromForm(updatedEntity, fieldsMap);
 
-                        Object result = currentRepo.updateById(updatedEntity, (Long) finalId);
-                        if (result != null) {
-                            loadTable(currentRepo, currentClass);
+                        if (isDuplicateCompositeKey(selectedItem, updatedEntity)) {
+                            System.out.println("Keine Änderungen festgestellt. Funktion wird abgebrochen.");
+                            return;
                         }
+
+                        if (hasSingleId) {
+                            Field idField = currentClass.getDeclaredField("id");
+                            idField.setAccessible(true);
+                            idField.set(updatedEntity, finalId);
+
+                            currentRepo.updateById(updatedEntity, (Long) finalId);
+                        } else {
+                            List<?> allExistingItems = (List<?>) currentRepo.getAll();
+                            boolean duplicateExists = false;
+
+                            for (Object existingItem : allExistingItems) {
+                                if (isDuplicateCompositeKey(existingItem, updatedEntity)) {
+                                    duplicateExists = true;
+                                    break;
+                                }
+                            }
+
+                            if (duplicateExists) {
+                                showErrorAlert("Diese Verknüpfung existiert bereits in der Datenbank! " +
+                                        "Änderung abgebrochen, um Datenverlust zu verhindern.");
+                                return;
+                            }
+
+                            currentRepo.delete(selectedItem);
+                            currentRepo.save(updatedEntity);
+                        }
+
+                        loadTable(currentRepo, currentClass);
+
                     } catch (Exception e) {
-                        showErrorAlert("Fehler beim Aktualisieren der Daten: " + e.getMessage());
+                        showErrorAlert("Fehler beim Aktualisieren: " + e.getMessage());
                     }
                 }
             });
@@ -261,7 +349,55 @@ public class TablePanelPageController {
     private Control createInputControlForField(Field field, Object currentValue) {
         Class<?> fieldType = field.getType();
 
-        // СЦЕНАРИЙ 1: Поле является Foreign Key
+        if (fieldType == boolean.class || fieldType == Boolean.class) {
+            ComboBox<String> booleanComboBox = new ComboBox<>();
+            booleanComboBox.setItems(FXCollections.observableArrayList("Yes", "No"));
+            booleanComboBox.setMaxWidth(Double.MAX_VALUE);
+
+            if (currentValue != null) {
+                boolean val = (boolean) currentValue;
+                booleanComboBox.getSelectionModel().select(val ? "Yes" : "No");
+            } else {
+                booleanComboBox.getSelectionModel().select("No");
+            }
+
+            return booleanComboBox;
+        }
+
+        if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) {
+            whz.pti.utils.annotations.ManyToMany anno = field.getAnnotation(whz.pti.utils.annotations.ManyToMany.class);
+
+            ListView<Object> listView = new ListView<>();
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            listView.setPrefHeight(120);
+
+            try {
+                Class<?> repoClass = anno.repoClass();
+
+                GeneralRepo<?> relatedRepo = getRepoFromContextByClass(repoClass);
+
+                if (relatedRepo != null) {
+                    List<Object> allAvailableItems = new ArrayList<>();
+                    for (Object item : relatedRepo.getAll()) {
+                        allAvailableItems.add(item);
+                    }
+                    listView.setItems(FXCollections.observableArrayList(allAvailableItems));
+
+                    if (currentValue instanceof Collection<?> currentConnections) {
+                        for (Object item : allAvailableItems) {
+                            if (currentConnections.contains(item)) {
+                                listView.getSelectionModel().select(item);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return listView;
+        }
+
         if (field.isAnnotationPresent(ForeignKey.class)) {
             ComboBox<Object> comboBox = new ComboBox<>();
             comboBox.setMaxWidth(Double.MAX_VALUE);
@@ -273,6 +409,9 @@ public class TablePanelPageController {
             else if (fieldType == Room.class) relatedRepo = context.getRoomRepo();
             else if (fieldType == Home.class) relatedRepo = context.getHomeRepo();
             else if (fieldType == Scenario.class) relatedRepo = context.getScenarioRepo();
+            else if (fieldType == DeviceScenario.class) relatedRepo = context.getDeviceScenarioRepo();
+            else if (fieldType == DeviceUser.class) relatedRepo = context.getDeviceUserRepo();
+            else if (fieldType == DeviceStateLog.class) relatedRepo = context.getDeviceStateLogRepo();
             else if (fieldType == Device.class) relatedRepo = context.getDeviceRepo();
             else if (fieldType == DeviceType.class) relatedRepo = context.getDeviceTypeRepo();
 
@@ -291,26 +430,21 @@ public class TablePanelPageController {
             return comboBox;
         }
 
-        // СЦЕНАРИЙ 2: Поле является ENUM (Новая логика)
         if (fieldType.isEnum()) {
             ComboBox<Object> comboBox = new ComboBox<>();
             comboBox.setMaxWidth(Double.MAX_VALUE);
 
-            // Получаем все константы этого Enum (например: [USER, ADMIN] или [ON, OFF])
             Object[] enumConstants = fieldType.getEnumConstants();
             comboBox.setItems(FXCollections.observableArrayList(enumConstants));
 
-            // Если редактируем — выбираем текущее значение
             if (currentValue != null) {
                 comboBox.getSelectionModel().select(currentValue);
             } else if (enumConstants.length > 0) {
-                // По умолчанию выбираем первый элемент из списка, чтобы поле не было пустым
                 comboBox.getSelectionModel().select(0);
             }
             return comboBox;
         }
 
-        // СЦЕНАРИЙ 3: Обычное текстовое поле
         TextField textField = new TextField();
         if (currentValue != null) {
             textField.setText(currentValue.toString());
@@ -326,6 +460,15 @@ public class TablePanelPageController {
             Control control = entry.getValue();
             Class<?> fieldType = field.getType();
 
+            if ((fieldType == boolean.class || fieldType == Boolean.class) && control instanceof ComboBox) {
+                ComboBox<String> comboBox = (ComboBox<String>) control;
+                String selectedValue = comboBox.getSelectionModel().getSelectedItem();
+
+                boolean booleanValue = "Yes".equals(selectedValue);
+                field.set(entity, booleanValue);
+                continue;
+            }
+
             if (control instanceof ComboBox<?> comboBox) {
                 Object selectedValue = comboBox.getSelectionModel().getSelectedItem();
 
@@ -339,6 +482,13 @@ public class TablePanelPageController {
                 } else {
                     field.set(entity, selectedValue);
                 }
+                continue;
+            }
+
+            if (control instanceof ListView<?> listView) {
+                List<?> selectedItems = new ArrayList<>(listView.getSelectionModel().getSelectedItems());
+
+                field.set(entity, selectedItems);
                 continue;
             }
 
@@ -364,6 +514,24 @@ public class TablePanelPageController {
                     } catch (java.time.format.DateTimeParseException e) {
                         throw new RuntimeException("Falsches Datumsformat für " + field.getName() + ". Bitte YYYY-MM-DD nutzen.");
                     }
+                } else if (fieldType == java.time.LocalTime.class) {
+                    try {
+                        field.set(entity, java.time.LocalTime.parse(textValue));
+                    } catch (java.time.format.DateTimeParseException e) {
+                        throw new RuntimeException("Falsches Zeitformat für " + field.getName() + ". Bitte hh:mm nutzen.");
+                    }
+                } else if (fieldType == java.time.LocalDateTime.class) {
+                    try {
+                        String normalizedValue = textValue.replace(" ", "T");
+
+                        if (normalizedValue.length() == 16) {
+                            normalizedValue += ":00";
+                        }
+
+                        field.set(entity, java.time.LocalDateTime.parse(normalizedValue));
+                    } catch (java.time.format.DateTimeParseException e) {
+                        throw new RuntimeException("Falsches Format für " + field.getName() + ". Bitte 'YYYY-MM-DD hh:mm' nutzen.");
+                    }
                 } else {
                     field.set(entity, textValue);
                 }
@@ -381,5 +549,97 @@ public class TablePanelPageController {
         Alert alert = new Alert(Alert.AlertType.ERROR, content, ButtonType.OK);
         alert.setHeaderText(null);
         alert.showAndWait();
+    }
+
+    private GeneralRepo<?> getRepoFromContextByClass(Class<?> repoClass) {
+        AppContext context = AppContext.getInstance();
+
+        if (repoClass.getSimpleName().equals("DeviceRepository") || repoClass.getSimpleName().contains("DeviceRepo")) {
+            return context.getDeviceRepo();
+        }
+        if (repoClass.getSimpleName().equals("ScenarioRepository") || repoClass.getSimpleName().contains("ScenarioRepo")) {
+            return context.getScenarioRepo();
+        }
+        if (repoClass.getSimpleName().equals("UserRepository") || repoClass.getSimpleName().contains("UserRepo")) {
+            return context.getUserRepo();
+        }
+        if (repoClass.getSimpleName().equals("RoomRepository") || repoClass.getSimpleName().contains("RoomRepo")) {
+            return context.getRoomRepo();
+        }
+        if (repoClass.getSimpleName().equals("HomeRepository") || repoClass.getSimpleName().contains("HomeRepo")) {
+            return context.getHomeRepo();
+        }
+        if (repoClass.getSimpleName().equals("DeviceTypeRepository") || repoClass.getSimpleName().contains("DeviceTypeRepo")) {
+            return context.getDeviceTypeRepo();
+        }
+
+        return null;
+    }
+
+    private List<Field> determineKeyFields(Class<?> clazz) {
+        List<Field> keyFields = new ArrayList<>();
+
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.getName().equalsIgnoreCase("id")) {
+                keyFields.add(field);
+                return keyFields;
+            }
+        }
+
+        for (Field field : clazz.getDeclaredFields()) {
+            Class<?> type = field.getType();
+            if (!type.isPrimitive() && type != String.class &&
+                    type != java.time.LocalDate.class && type != java.time.LocalTime.class &&
+                    type != java.time.LocalDateTime.class && !type.isEnum() &&
+                    type != Integer.class && type != Long.class && type != Double.class) {
+
+                keyFields.add(field);
+            }
+        }
+
+        return keyFields;
+    }
+
+    private boolean isDuplicateCompositeKey(Object dbEntity, Object newEntity) throws Exception {
+        for (Field field : currentClass.getDeclaredFields()) {
+            field.setAccessible(true);
+            Object dbValue = field.get(dbEntity);
+            Object newValue = field.get(newEntity);
+
+            if (dbValue == null && newValue == null) {
+                continue;
+            }
+
+            if ((dbValue == null && newValue != null) || (dbValue != null && newValue == null)) {
+                return false;
+            }
+
+            if (!field.getType().isPrimitive() && field.getType() != String.class &&
+                    !field.getType().getName().startsWith("java.time") &&
+                    field.getType() != Integer.class && field.getType() != Long.class && field.getType() != Double.class) {
+
+                try {
+                    Field idField = dbValue.getClass().getDeclaredField("id");
+                    idField.setAccessible(true);
+
+                    Object dbId = idField.get(dbValue);
+                    Object newId = idField.get(newValue);
+
+                    if (dbId != null && !dbId.equals(newId)) {
+                        return false;
+                    }
+                } catch (NoSuchFieldException ignored) {
+                    if (!dbValue.equals(newValue)) {
+                        return false;
+                    }
+                }
+            } else {
+                if (!dbValue.equals(newValue)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

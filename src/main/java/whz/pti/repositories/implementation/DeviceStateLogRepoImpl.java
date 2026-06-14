@@ -1,5 +1,6 @@
 package whz.pti.repositories.implementation;
 
+import whz.pti.models.DeviceLogState;
 import whz.pti.models.DeviceStateLog;
 import whz.pti.repositories.DeviceStateLogRepo;
 
@@ -32,7 +33,7 @@ public class DeviceStateLogRepoImpl extends GeneralRepoImpl<DeviceStateLog> impl
                 while (rs.next()) {
                     DeviceStateLog log = new DeviceStateLog();
                     log.setId(rs.getLong("log_id"));
-                    log.setState(rs.getString("state_value"));
+                    log.setState(DeviceLogState.valueOf(rs.getString("state_value")));
 
                     if (rs.getTimestamp("timestamp") != null) {
                         log.setTime(rs.getTimestamp("timestamp").toLocalDateTime());

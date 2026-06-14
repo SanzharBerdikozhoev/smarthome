@@ -68,7 +68,7 @@ public class HomePageController {
 
         actionColumn.setCellValueFactory(cell ->
                 new javafx.beans.property.SimpleStringProperty(
-                        cell.getValue().getState()
+                        cell.getValue().getState().name()
                 )
         );
 

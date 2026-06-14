@@ -310,24 +310,128 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
         return null;
     }
 
+//    @Override
+//    public void delete(Object entity) {
+//        if (entity == null) {
+//            return;
+//        }
+//
+//        try {
+//            @SuppressWarnings("unchecked")
+//            Map<String, Object> fields = unmapEntity((T) entity);
+//            Object idValue = fields.get("id");
+//
+//            if (idValue instanceof Long) {
+//                deleteById((Long) idValue);
+//            } else if (idValue instanceof Integer) {
+//                deleteById(((Integer) idValue).longValue());
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
     @Override
-    public void delete(Object entity) {
-        if (entity == null) {
-            return;
+    public void delete(T entity) {
+        if (entity == null) return;
+
+        Class<?> clazz = entity.getClass();
+
+        String rawTableName = clazz.getSimpleName().replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+
+        String tableName;
+        if(rawTableName.equals("user")) {
+            tableName = "[users]";
+        } else {
+            tableName = "[" + rawTableName + "]";
+        }
+
+
+        List<Field> keyFields = new ArrayList<>();
+        boolean hasSingleId = false;
+
+        try {
+            clazz.getDeclaredField("id");
+            hasSingleId = true;
+        } catch (NoSuchFieldException ignored) {}
+
+        if (hasSingleId) {
+            try {
+                keyFields.add(clazz.getDeclaredField("id"));
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (isEntityField(field)) {
+                    keyFields.add(field);
+                }
+            }
         }
 
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> fields = unmapEntity((T) entity);
-            Object idValue = fields.get("id");
+            if (hasSingleId) {
+                Field idField = clazz.getDeclaredField("id");
+                idField.setAccessible(true);
+                Object primaryKeyId = idField.get(entity);
 
-            if (idValue instanceof Long) {
-                deleteById((Long) idValue);
-            } else if (idValue instanceof Integer) {
-                deleteById(((Integer) idValue).longValue());
+                if (primaryKeyId != null) {
+                    String[] dependentTables = {"device_user", "automation_id", "device_state_log"};
+                    String idColumnName = rawTableName + "_id";
+
+                    for (String depTable : dependentTables) {
+                        if (depTable.equals(rawTableName)) continue;
+
+                        String checkSql = "DELETE FROM dbo.[" + depTable + "] WHERE [" + idColumnName + "] = ?";
+                        try (PreparedStatement depStmt = DBConnection.getInstance().getConnection().prepareStatement(checkSql)) {
+                            depStmt.setObject(1, primaryKeyId);
+                            depStmt.executeUpdate();
+                        } catch (SQLException ignored) {
+                        }
+                    }
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            StringBuilder sql = new StringBuilder("DELETE FROM dbo.").append(tableName).append(" WHERE ");
+            for (int i = 0; i < keyFields.size(); i++) {
+                Field field = keyFields.get(i);
+
+                // Если таблицы с ID -> колонка "id". Если без ID -> "device_id", "scenario_id"
+
+                String columnName;
+                if(field.getName().equals("scenario")) {
+                    columnName = "automation_id";
+                } else {
+                    columnName = hasSingleId ? field.getName() : field.getName() + "_id";
+                }
+
+                sql.append("[").append(columnName).append("] = ?");
+                if (i < keyFields.size() - 1) {
+                    sql.append(" AND ");
+                }
+            }
+
+            try (PreparedStatement stmt = DBConnection.getInstance().getConnection().prepareStatement(sql.toString())) {
+                for (int i = 0; i < keyFields.size(); i++) {
+                    Field field = keyFields.get(i);
+                    field.setAccessible(true);
+                    Object value = field.get(entity);
+
+                    // Если это связующая таблица и поле является объектом, достаем его числовое ID
+                    if (!hasSingleId && value != null && isEntityField(field)) {
+                        Field innerId = value.getClass().getDeclaredField("id");
+                        innerId.setAccessible(true);
+                        value = innerId.get(value);
+                    }
+
+                    stmt.setObject(i + 1, value);
+                }
+
+                stmt.executeUpdate();
+            }
+
+        } catch (SQLException | IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException("Fehler beim Löschen des Eintrags in " + clazz.getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
@@ -538,5 +642,17 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
         }
 
         return result;
+    }
+
+    private boolean isEntityField(Field field) {
+        Class<?> type = field.getType();
+        return !type.isPrimitive()
+                && type != String.class
+                && type != Integer.class
+                && type != Long.class
+                && type != Double.class
+                && type != Boolean.class
+                && !type.isEnum()
+                && !type.getName().startsWith("java.time");
     }
 }

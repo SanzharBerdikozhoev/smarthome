@@ -9,21 +9,21 @@ public class DeviceScenario {
     private Device device;
     @ForeignKey(column = "automation_id", repoClass = ScenarioRepoImpl.class)
     private Scenario scenario;
-    private String role;
+    private DeviceScenarioRole role;
 
     public DeviceScenario() {}
 
-    public DeviceScenario(Long id, Device device, Scenario scenario,  String role) {
+    public DeviceScenario(Long id, Device device, Scenario scenario, DeviceScenarioRole role) {
         this.device = device;
         this.scenario = scenario;
         this.role = role;
     }
 
-    public String getRole() {
+    public DeviceScenarioRole getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(DeviceScenarioRole role) {
         this.role = role;
     }
 
