@@ -6,5 +6,5 @@ import whz.pti.repositories.DeviceTypeRepo;
 import whz.pti.repositories.GeneralRepo;
 
 public class DeviceTypeRepoImpl extends GeneralRepoImpl<DeviceType> implements DeviceTypeRepo {
-    public DeviceTypeRepoImpl() {super();}
+    public DeviceTypeRepoImpl() {super("device_type");}
 }

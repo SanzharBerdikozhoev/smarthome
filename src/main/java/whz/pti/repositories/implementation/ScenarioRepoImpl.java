@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScenarioRepoImpl extends GeneralRepoImpl<Scenario> implements ScenarioRepo {
-    public ScenarioRepoImpl() {super();}
+    public ScenarioRepoImpl() {super("scenario");}
 
     @Override
     public List<Scenario> getScenariosByUserId(Long userId) {

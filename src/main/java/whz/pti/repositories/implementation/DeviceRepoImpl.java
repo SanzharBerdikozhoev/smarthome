@@ -6,7 +6,7 @@ import whz.pti.repositories.DeviceRepo;
 import java.util.List;
 
 public class DeviceRepoImpl extends GeneralRepoImpl<Device> implements DeviceRepo {
-    public DeviceRepoImpl() {super();}
+    public DeviceRepoImpl() {super("device");}
 
     @Override
     public java.util.List<Device> getDevicesByRoomId(Long roomId) {

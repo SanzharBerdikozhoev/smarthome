@@ -7,7 +7,7 @@ import whz.pti.repositories.RoomRepo;
 import java.util.List;
 
 public class RoomRepoImpl extends GeneralRepoImpl<Room> implements RoomRepo {
-    public RoomRepoImpl() {super();}
+    public RoomRepoImpl() {super("room");}
 
     @Override
     public java.util.List<Room> getRoomsByHouseId(Long houseId) {

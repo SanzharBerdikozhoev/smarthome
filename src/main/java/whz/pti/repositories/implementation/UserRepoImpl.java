@@ -4,7 +4,7 @@ import whz.pti.models.User;
 import whz.pti.repositories.UserRepo;
 
 
-public class UserRepoImpl extends GeneralRepoImpl<User> implements UserRepo {
+public class tUserRepoImpl extends GeneralRepoImpl<User> implements UserRepo {
     public UserRepoImpl() {
         super("users");
     }
