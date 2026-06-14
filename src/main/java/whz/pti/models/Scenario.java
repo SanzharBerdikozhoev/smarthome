@@ -9,8 +9,8 @@ import java.util.List;
 
 public class Scenario {
     private Long id;
-    @Column(name = "device_id")
-    private String deviceName;
+    private String name;
+    private String description;
     private Boolean isActive;
     @Column(name = "start_time")
     private LocalTime startTime;
@@ -27,9 +27,9 @@ public class Scenario {
 
     public Scenario() {}
 
-    public Scenario(Long id, String deviceName, Boolean isActive ,LocalTime startTime, LocalTime endTime, List<Device> devices) {
+    public Scenario(Long id, String name, Boolean isActive ,LocalTime startTime, LocalTime endTime, List<Device> devices) {
         this.id = id;
-        this.deviceName = deviceName;
+        this.name = name;
         this.isActive = isActive;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -61,12 +61,12 @@ public class Scenario {
     }
 
 
-    public String getDeviceName() {
-        return deviceName;
+    public String getName() {
+        return name;
     }
 
-    public void setDeviceName(String deviceName) {
-        this.deviceName = deviceName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public List<Device> getDevices() {
@@ -81,6 +81,22 @@ public class Scenario {
         return isActive;
     }
     public void setIsActive(Boolean isActive) {this.isActive = isActive;}
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     @Override
     public String toString() {

@@ -30,7 +30,7 @@ CREATE TABLE home
 CREATE TABLE room
 (
     id      INT PRIMARY KEY IDENTITY (1,1),
-    name    VARCHAR(50) NOT NULL UNIQUE,
+    name    VARCHAR(50) NOT NULL,
     floor   VARCHAR(30) NOT NULL,
     square  FLOAT       NOT NULL CHECK (square > 0),
     home_id INT         NOT NULL,
@@ -91,11 +91,12 @@ CREATE TABLE device_state_log
 
 CREATE TABLE scenario
 (
-    id         INT PRIMARY KEY IDENTITY (1,1),
-    device_id  VARCHAR(100) NOT NULL UNIQUE,
-    is_active  BIT          NOT NULL DEFAULT 1,
-    start_time TIME         NOT NULL,
-    end_time   TIME         NOT NULL
+    id          INT PRIMARY KEY IDENTITY (1,1),
+    name        VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    is_active   BIT          NOT NULL DEFAULT 1,
+    start_time  TIME         NOT NULL,
+    end_time    TIME         NOT NULL
 );
 
 CREATE TABLE device_user

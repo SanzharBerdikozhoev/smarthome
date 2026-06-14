@@ -4,14 +4,12 @@ import whz.pti.repositories.implementation.UserRepoImpl;
 import whz.pti.utils.annotations.Column;
 import whz.pti.utils.annotations.ForeignKey;
 
-import java.math.BigDecimal;
-
 public class Home {
     private Long id;
     private String address;
     private String town;
-    @Column(name = "zipCode")
-    private String zipCode;
+    @Column(name = "zip_code")
+    private String zip_code;
     @ForeignKey(column = "user_id", repoClass = UserRepoImpl.class)
     private User user;
 
@@ -21,7 +19,7 @@ public class Home {
         this.id = id;
         this.address = address;
         this.town = town;
-        this.zipCode = zipCode;
+        this.zip_code = zipCode;
         this.user = user;
     }
 
@@ -49,12 +47,12 @@ public class Home {
         this.town = town;
     }
 
-    public String getZipCode() {
-        return zipCode;
+    public String getZip_code() {
+        return zip_code;
     }
 
-    public void setZipCode(String zipCode) {
-        this.zipCode = zipCode;
+    public void setZip_code(String zip_code) {
+        this.zip_code = zip_code;
     }
 
     public User getUser() {

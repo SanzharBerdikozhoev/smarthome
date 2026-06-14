@@ -36,4 +36,10 @@ public class ScenarioServiceImpl implements ScenarioService {
     public List<Scenario> getScenarios() {
         return (List<Scenario>) scenarioRepo.getAll();
     }
+
+    @Override
+    public List<Scenario> getScenariosByUserId(Long userId) {
+        if (userId == null) return new java.util.ArrayList<>();
+        return scenarioRepo.getScenariosByUserId(userId);
+    }
 }
