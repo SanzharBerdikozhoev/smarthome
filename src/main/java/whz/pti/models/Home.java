@@ -68,12 +68,6 @@ public class Home {
     @Override
     public String
     toString() {
-        return "Home{" +
-                "id=" + id +
-                ", address='" + address + '\'' +
-                ", town='" + town + '\'' +
-                ", zipCode='" + zipCode + '\'' +
-                ", user=" + user +
-                '}';
+        return address + "," + town;
     }
 }

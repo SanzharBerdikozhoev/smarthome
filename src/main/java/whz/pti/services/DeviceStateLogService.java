@@ -12,4 +12,5 @@ public interface DeviceStateLogService {
     void delete(DeviceStateLog deviceStateLog);
     Optional<DeviceStateLog> getDeviceStateLog(Long deviceStateLogId) throws SQLException;
     List<DeviceStateLog> getDeviceStateLogs();
+    List<DeviceStateLog> getLogsByRoomId(Long roomId);
 }

@@ -14,4 +14,5 @@ public interface DeviceService {
     Device getDeviceByName(String deviceName);
     List<Device> getDevices();
     List<Device> getDevicesByRoomId(Long roomId);
+    void updateDeviceState(Long deviceId, boolean active, Long userId);
 }

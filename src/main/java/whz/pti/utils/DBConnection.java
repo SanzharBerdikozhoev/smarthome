@@ -62,21 +62,21 @@ public class DBConnection {
         this.port = "1433";
         this.database = "SmarthomeDB";
         this.username = "sa";
-        this.password = "Admin123@";
+        this.password = "Admin1234";
         this.encrypt = false;
         this.trustServerCertificate = true;
     }
 
-//    public Connection getConnection() throws SQLException {
-//        if (connection == null || connection.isClosed()) {
-//            connection = createConnection();
-//        }
-//        return connection;
-//    }
-
     public Connection getConnection() throws SQLException {
-        return createConnection();
+        if (connection == null || connection.isClosed()) {
+            connection = createConnection();
+        }
+        return connection;
     }
+
+//        public Connection getConnection() throws SQLException {
+//            return createConnection();
+//        }
 
     private Connection createConnection() throws SQLException {
         String connectionString = String.format(

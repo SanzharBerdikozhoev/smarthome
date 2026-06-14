@@ -41,4 +41,11 @@ public class DeviceTypeServiceImpl implements DeviceTypeService {
     public List<DeviceType> getDeviceTypes() {
         return (List<DeviceType>) deviceTypeRepo.getAll();
     }
+
+    @Override
+    public DeviceType getDeviceTypeByDeviceId(Long deviceId) {
+        if (deviceId == null) {return new DeviceType();}
+        DeviceType deviceType = deviceTypeRepo.getDeviceTypeByDeviceId(deviceId);
+        return deviceType;
+    }
 }

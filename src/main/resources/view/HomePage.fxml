@@ -15,6 +15,7 @@
 <?import javafx.scene.text.Font?>
 
 <?import java.net.URL?>
+<?import javafx.scene.layout.StackPane?>
 <BorderPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: #f4f4f9;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="whz.pti.controllers.HomePageController">
     <stylesheets>
         <URL value="@../styles/HomePage.css"/>
@@ -63,6 +64,15 @@
             <children>
 
                 <VBox spacing="10.0" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);">
+                    <StackPane prefHeight="220"
+                               styleClass="glass-card">
+
+                        <Label text="Living Room"
+                               style="-fx-font-size: 32;
+                  -fx-text-fill: white;
+                  -fx-font-weight: bold;"/>
+
+                    </StackPane>
                     <children>
                         <Label text="Schnellszenarien">
                             <font>

@@ -30,4 +30,19 @@ public class DeviceRepoImpl extends GeneralRepoImpl<Device> implements DeviceRep
         }
         return devices;
     }
+
+    @Override
+    public void updateDeviceState(Long deviceId, boolean active) {
+        String sql = "UPDATE device SET is_active = ? WHERE id = ?";
+        try (java.sql.Connection conn = whz.pti.utils.DBConnection.getInstance().getConnection();
+             java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setBoolean(1, active);
+            stmt.setLong(2, deviceId);
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
