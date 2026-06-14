@@ -117,14 +117,7 @@ public class Device {
 
     @Override
     public String toString() {
-        return "Device{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", room=" + room +
-                ", deviceType=" + deviceType +
-                ", installDate=" + installDate +
-                ", active=" + active +
-                '}';
+        return this.name != null ? this.name + "(ID: " + this.id +  ")" : "unbekannter Gerät";
     }
 }
 

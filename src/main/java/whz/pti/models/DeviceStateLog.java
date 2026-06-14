@@ -67,12 +67,11 @@ public class DeviceStateLog {
 
     @Override
     public String toString() {
-        return "DeviceStateLog{" +
-                "id=" + id +
-                ", device=" + device +
-                ", time=" + time +
-                ", state='" + state + '\'' +
-                ", user=" + user +
-                '}';
+        String deviceName = (this.device != null) ? this.device.toString() : "Unbekanntes Gerät";
+        String stateValue = (this.state != null && !this.state.trim().isEmpty()) ? this.state : "KEIN STATUS";
+        String timeStamp = (this.time != null) ? this.time.toString() : "Unbekannte Zeit";
+        String userName = (this.user != null) ? " (Aktion durch: " + this.user.toString() + ")" : "";
+
+        return "[" + timeStamp + "] " + deviceName + " -> " + stateValue + userName;
     }
 }

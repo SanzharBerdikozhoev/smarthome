@@ -4,13 +4,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import whz.pti.models.*;
 import whz.pti.utils.AppContext;
 import whz.pti.repositories.GeneralRepo;
 import whz.pti.utils.UserSession;
+import whz.pti.utils.annotations.ForeignKey;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -18,23 +18,15 @@ import java.util.List;
 import java.util.Map;
 
 public class TablePanelPageController {
-    @FXML
-    private ListView<String> tablesListView;
-    @FXML
-    private Label labelCurrentTableName;
-    @FXML
-    private TableView<Object> genericTable;
-    @FXML
-    private HBox actionButtonsContainer;
-    @FXML
-    private Button buttonAdd;
-    @FXML
-    private Button buttonEdit;
-    @FXML
-    private Button buttonDelete;
+    @FXML private ListView<String> tablesListView;
+    @FXML private Label labelCurrentTableName;
+    @FXML private TableView<Object> genericTable;
+    @FXML private HBox actionButtonsContainer;
+    @FXML private Button buttonAdd;
+    @FXML private Button buttonEdit;
+    @FXML private Button buttonDelete;
 
     private final ObservableList<String> tables = FXCollections.observableArrayList();
-
     private GeneralRepo<Object> currentRepo;
     private Class<?> currentClass;
 
@@ -42,19 +34,11 @@ public class TablePanelPageController {
     public void initialize() {
         applyPermissions();
 
-        if(UserSession.isAdmin()) {
+        if (UserSession.isAdmin()) {
             tables.add("Users");
         }
 
-        tables.add("Room");
-        tables.add("Home");
-        tables.add("Scenario");
-        tables.add("Device");
-        tables.add("DeviceScenario");
-        tables.add("DeviceStateLog");
-        tables.add("DeviceType");
-        tables.add("DeviceUser");
-
+        tables.addAll("Room", "Home", "Scenario", "Device", "DeviceScenario", "DeviceStateLog", "DeviceType", "DeviceUser");
         tablesListView.setItems(tables);
 
         tablesListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -79,7 +63,6 @@ public class TablePanelPageController {
 
     private void applyPermissions() {
         boolean isAdmin = UserSession.isAdmin();
-
         actionButtonsContainer.setVisible(isAdmin);
         buttonAdd.setDisable(!isAdmin);
         buttonEdit.setDisable(!isAdmin);
@@ -92,18 +75,28 @@ public class TablePanelPageController {
         this.currentClass = entityClass;
 
         genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
-
         genericTable.getColumns().clear();
         genericTable.getItems().clear();
 
         for (Field field : entityClass.getDeclaredFields()) {
-            String fieldName = field.getName();
+            if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
 
+            String fieldName = field.getName();
             String prettyHeader = fieldName.replaceAll("([a-z])([A-Z])", "$1 $2");
             prettyHeader = prettyHeader.substring(0, 1).toUpperCase() + prettyHeader.substring(1);
 
             TableColumn<Object, Object> column = new TableColumn<>(prettyHeader);
-            column.setCellValueFactory(new PropertyValueFactory<>(fieldName));
+
+            column.setCellValueFactory(cellData -> {
+                try {
+                    Object item = cellData.getValue();
+                    field.setAccessible(true);
+                    Object value = field.get(item);
+                    return new javafx.beans.property.SimpleObjectProperty<>(value != null ? value : "-");
+                } catch (Exception e) {
+                    return new javafx.beans.property.SimpleObjectProperty<>("[Fehler]");
+                }
+            });
 
             if (fieldName.equalsIgnoreCase("id")) {
                 column.setStyle("-fx-alignment: CENTER;");
@@ -128,15 +121,15 @@ public class TablePanelPageController {
 
         int rowsToCheck = Math.min(genericTable.getItems().size(), 15);
         for (int i = 0; i < rowsToCheck; i++) {
-            if (column.getCellData(i) != null) {
-                t.setText(column.getCellData(i).toString());
-                double cellW = t.getLayoutBounds().getWidth() + 25.0;
-                if (cellW > maxW) {
-                    maxW = cellW;
+            try {
+                Object cellData = column.getCellData(i);
+                if (cellData != null) {
+                    t.setText(cellData.toString());
+                    double cellW = t.getLayoutBounds().getWidth() + 25.0;
+                    if (cellW > maxW) maxW = cellW;
                 }
-            }
+            } catch (Exception ignored) {}
         }
-
         column.setPrefWidth(maxW);
     }
 
@@ -149,17 +142,17 @@ public class TablePanelPageController {
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         VBox form = new VBox(10);
-        form.setStyle("-fx-padding: 15; -fx-min-width: 300;");
-        Map<Field, TextField> fieldsMap = new HashMap<>();
+        form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
+        Map<Field, Control> fieldsMap = new HashMap<>(); // Используем абстрактный Control
 
         for (Field field : currentClass.getDeclaredFields()) {
-            if (field.getName().equalsIgnoreCase("id")) continue;
+            if (field.getName().equalsIgnoreCase("id") || field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
 
             Label label = new Label(field.getName() + ":");
-            TextField textField = new TextField();
-            form.getChildren().addAll(label, textField);
+            Control inputControl = createInputControlForField(field, null); // Создаем нужный инпут
 
-            fieldsMap.put(field, textField);
+            form.getChildren().addAll(label, inputControl);
+            fieldsMap.put(field, inputControl);
         }
 
         dialog.getDialogPane().setContent(form);
@@ -168,12 +161,12 @@ public class TablePanelPageController {
             if (response == ButtonType.OK) {
                 try {
                     Object newEntity = currentClass.getDeclaredConstructor().newInstance();
-
                     fillEntityFromForm(newEntity, fieldsMap);
 
                     Object savedObject = currentRepo.save(newEntity);
                     if (savedObject != null) {
                         genericTable.getItems().add(savedObject);
+                        loadTable(currentRepo, currentClass);
                     }
                 } catch (Exception e) {
                     showErrorAlert("Fehler beim Speichern der Daten: " + e.getMessage());
@@ -196,13 +189,14 @@ public class TablePanelPageController {
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         VBox form = new VBox(10);
-        form.setStyle("-fx-padding: 15; -fx-min-width: 300;");
-        Map<Field, TextField> fieldsMap = new HashMap<>();
+        form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
+        Map<Field, Control> fieldsMap = new HashMap<>();
 
         try {
             Object idValue = null;
 
             for (Field field : currentClass.getDeclaredFields()) {
+                if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
                 field.setAccessible(true);
                 Object currentValue = field.get(selectedItem);
 
@@ -212,10 +206,10 @@ public class TablePanelPageController {
                 }
 
                 Label label = new Label(field.getName() + ":");
-                TextField textField = new TextField(currentValue != null ? currentValue.toString() : "");
-                form.getChildren().addAll(label, textField);
+                Control inputControl = createInputControlForField(field, currentValue);
 
-                fieldsMap.put(field, textField);
+                form.getChildren().addAll(label, inputControl);
+                fieldsMap.put(field, inputControl);
             }
 
             dialog.getDialogPane().setContent(form);
@@ -264,32 +258,115 @@ public class TablePanelPageController {
         });
     }
 
+    private Control createInputControlForField(Field field, Object currentValue) {
+        Class<?> fieldType = field.getType();
+
+        // СЦЕНАРИЙ 1: Поле является Foreign Key
+        if (field.isAnnotationPresent(ForeignKey.class)) {
+            ComboBox<Object> comboBox = new ComboBox<>();
+            comboBox.setMaxWidth(Double.MAX_VALUE);
+
+            AppContext context = AppContext.getInstance();
+            GeneralRepo<?> relatedRepo = null;
+
+            if (fieldType == User.class) relatedRepo = context.getUserRepo();
+            else if (fieldType == Room.class) relatedRepo = context.getRoomRepo();
+            else if (fieldType == Home.class) relatedRepo = context.getHomeRepo();
+            else if (fieldType == Scenario.class) relatedRepo = context.getScenarioRepo();
+            else if (fieldType == Device.class) relatedRepo = context.getDeviceRepo();
+            else if (fieldType == DeviceType.class) relatedRepo = context.getDeviceTypeRepo();
+
+            if (relatedRepo != null) {
+                Iterable<?> iterableItems = relatedRepo.getAll();
+                List<Object> availableItems = new java.util.ArrayList<>();
+                for (Object item : iterableItems) {
+                    availableItems.add(item);
+                }
+                comboBox.setItems(FXCollections.observableArrayList(availableItems));
+
+                if (currentValue != null) {
+                    comboBox.getSelectionModel().select(currentValue);
+                }
+            }
+            return comboBox;
+        }
+
+        // СЦЕНАРИЙ 2: Поле является ENUM (Новая логика)
+        if (fieldType.isEnum()) {
+            ComboBox<Object> comboBox = new ComboBox<>();
+            comboBox.setMaxWidth(Double.MAX_VALUE);
+
+            // Получаем все константы этого Enum (например: [USER, ADMIN] или [ON, OFF])
+            Object[] enumConstants = fieldType.getEnumConstants();
+            comboBox.setItems(FXCollections.observableArrayList(enumConstants));
+
+            // Если редактируем — выбираем текущее значение
+            if (currentValue != null) {
+                comboBox.getSelectionModel().select(currentValue);
+            } else if (enumConstants.length > 0) {
+                // По умолчанию выбираем первый элемент из списка, чтобы поле не было пустым
+                comboBox.getSelectionModel().select(0);
+            }
+            return comboBox;
+        }
+
+        // СЦЕНАРИЙ 3: Обычное текстовое поле
+        TextField textField = new TextField();
+        if (currentValue != null) {
+            textField.setText(currentValue.toString());
+        }
+        return textField;
+    }
+
     @SuppressWarnings("unchecked")
-    private void fillEntityFromForm(Object entity, Map<Field, TextField> fieldsMap) throws Exception {
-        for (Map.Entry<Field, TextField> entry : fieldsMap.entrySet()) {
+    private void fillEntityFromForm(Object entity, Map<Field, Control> fieldsMap) throws Exception {
+        for (Map.Entry<Field, Control> entry : fieldsMap.entrySet()) {
             Field field = entry.getKey();
             field.setAccessible(true);
-            String textValue = entry.getValue().getText().trim();
+            Control control = entry.getValue();
+            Class<?> fieldType = field.getType();
 
-            if (textValue.isEmpty()) {
-                field.set(entity, null);
+            if (control instanceof ComboBox<?> comboBox) {
+                Object selectedValue = comboBox.getSelectionModel().getSelectedItem();
+
+                if (selectedValue == null) {
+                    field.set(entity, null);
+                    continue;
+                }
+
+                if (fieldType.isEnum()) {
+                    field.set(entity, Enum.valueOf((Class<Enum>) fieldType, selectedValue.toString()));
+                } else {
+                    field.set(entity, selectedValue);
+                }
                 continue;
             }
 
-            Class<?> fieldType = field.getType();
+            if (control instanceof TextField textField) {
+                String textValue = textField.getText().trim();
 
-            if (fieldType == Integer.class || fieldType == int.class) {
-                field.set(entity, Integer.parseInt(textValue));
-            } else if (fieldType == Long.class || fieldType == long.class) {
-                field.set(entity, Long.parseLong(textValue));
-            } else if (fieldType == Double.class || fieldType == double.class) {
-                field.set(entity, Double.parseDouble(textValue));
-            } else if (fieldType == Boolean.class || fieldType == boolean.class) {
-                field.set(entity, Boolean.parseBoolean(textValue));
-            } else if (fieldType.isEnum()) {
-                field.set(entity, Enum.valueOf((Class<Enum>) fieldType, textValue.toUpperCase()));
-            } else {
-                field.set(entity, textValue);
+                if (textValue.isEmpty()) {
+                    field.set(entity, null);
+                    continue;
+                }
+
+                if (fieldType == Integer.class || fieldType == int.class) {
+                    field.set(entity, Integer.parseInt(textValue));
+                } else if (fieldType == Long.class || fieldType == long.class) {
+                    field.set(entity, Long.parseLong(textValue));
+                } else if (fieldType == Double.class || fieldType == double.class) {
+                    field.set(entity, Double.parseDouble(textValue));
+                } else if (fieldType == Boolean.class || fieldType == boolean.class) {
+                    field.set(entity, Boolean.parseBoolean(textValue));
+                } else if (fieldType == java.time.LocalDate.class) {
+                    try {
+                        field.set(entity, java.time.LocalDate.parse(textValue));
+                    } catch (java.time.format.DateTimeParseException e) {
+                        throw new RuntimeException("Falsches Datumsformat für " + field.getName() + ". Bitte YYYY-MM-DD nutzen.");
+                    }
+                } else {
+                    field.set(entity, textValue);
+                }
             }
         }
     }

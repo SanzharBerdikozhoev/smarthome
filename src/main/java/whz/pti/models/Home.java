@@ -10,7 +10,7 @@ public class Home {
     private Long id;
     private String address;
     private String town;
-    @Column(name = "zipCode")
+    @Column(name = "zip_code")
     private String zipCode;
     @ForeignKey(column = "user_id", repoClass = UserRepoImpl.class)
     private User user;
@@ -66,8 +66,7 @@ public class Home {
     }
 
     @Override
-    public String
-    toString() {
-        return address + "," + town;
+    public String toString() {
+        return address + ", " + town;
     }
 }

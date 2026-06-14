@@ -5,8 +5,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
-import whz.pti.services.HomeService;
-import whz.pti.services.implementation.HomeServiceImpl;
 import java.util.logging.Logger;
 
 

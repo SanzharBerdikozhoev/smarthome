@@ -53,11 +53,11 @@ public class Room {
         this.square = square;
     }
 
-    public Home getHouse() {
+    public Home getHome() {
         return home;
     }
 
-    public void setHouse(Home home) {
+    public void setHome(Home home) {
         this.home = home;
     }
 

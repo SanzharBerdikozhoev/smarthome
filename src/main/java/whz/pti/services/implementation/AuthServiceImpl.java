@@ -34,10 +34,6 @@ public class AuthServiceImpl implements AuthService {
                 .getByField("username", username)
                 .orElseThrow(()-> new Exception("Benutzername oder Passwort falsch"));
 
-        System.out.println(user);
-        String hashedPassword = PasswordService.hashPassword(user.getPassword());
-        System.out.println(hashedPassword);
-
         boolean passwordMatch = PasswordService.verifyPassword(password, user.getPassword());
 
         if(!passwordMatch) {

@@ -5,7 +5,7 @@ public class Launcher {
     public static void main(String[] args) {
         try {
             UserInitializer.init();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if(e.getMessage().equals("Benutzer existiert bereits")) {
                 System.out.println("Benutzer wurde nicht registriert, da sie bereits existieren.");
             }

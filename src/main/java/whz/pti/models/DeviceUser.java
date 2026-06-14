@@ -47,9 +47,9 @@ public class DeviceUser {
 
     @Override
     public String toString() {
-        return "DeviceUser{" +
-                ", device=" + device +
-                ", user=" + user +
-                '}';
+        String deviceName = (this.device != null) ? this.device.toString() : "Unbekanntes Gerät";
+        String userName = (this.user != null) ? this.user.toString() : "Unbekannter Nutzer";
+
+        return deviceName + " von " + userName;
     }
 }

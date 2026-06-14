@@ -84,10 +84,10 @@ public class Scenario {
 
     @Override
     public String toString() {
-        return "Scenario{" +
-                "id=" + id +
-                ", startTime=" + startTime +
-                ", endTime=" + endTime +
-                '}';
+        String start = (this.startTime != null) ? this.startTime.toString() : "00:00";
+        String end = (this.endTime != null) ? this.endTime.toString() : "23:59";
+        String displayId = (this.id != null) ? String.valueOf(this.id) : "Neu";
+
+        return "Szenario (ID: " + displayId + ") [" + start + " - " + end + "]";
     }
 }

@@ -39,11 +39,10 @@ public class DeviceType {
 
     @Override
     public String toString() {
-        return "DeviceType{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                '}';
+        String displayName = (this.name != null && !this.name.trim().isEmpty()) ? this.name : "Unbekannt";
+        String displayId = (this.id != null) ? String.valueOf(this.id) : "Neu";
+
+        return displayName + " (ID: " + displayId + ")";
     }
 }
 

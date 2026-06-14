@@ -45,9 +45,9 @@ public class DeviceScenario {
 
     @Override
     public String toString() {
-        return "DeviceScenario{" +
-                ", device=" + device +
-                ", scenario=" + scenario +
-                '}';
+        String deviceName = (this.device != null) ? this.device.toString() : "Unbekanntes Gerät";
+        String scenarioName = (this.scenario != null) ? this.scenario.toString() : "Unbekanntes Szenario";
+
+        return deviceName + " ➔ " + scenarioName;
     }
 }

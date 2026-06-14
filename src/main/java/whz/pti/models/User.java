@@ -69,19 +69,8 @@ public class User {
         this.password = password;
     }
 
-//    @Override
-//    public String toString() {
-//        return "User{" +
-//                "id=" + id +
-//                ", name='" + name + '\'' +
-//                ", email='" + email + '\'' +
-//                ", role=" + role +
-//                ", password='" + password + '\'' +
-//                '}';
-//    }
-
     @Override
     public String toString() {
-        return id.toString();
+        return this.name != null ? this.name + " (ID: " + this.id + ")" : "User ID: " + this.id;
     }
 }
