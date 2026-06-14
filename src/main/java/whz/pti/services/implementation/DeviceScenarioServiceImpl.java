@@ -36,4 +36,9 @@ public class DeviceScenarioServiceImpl implements DeviceScenarioService {
     public List<DeviceScenario> getDeviceScenarios() {
         return (List<DeviceScenario>) deviceScenarioRepo.getAll();
     }
+
+    @Override
+    public List<DeviceScenario> getByScenarioId(Long scenarioId) {
+        return deviceScenarioRepo.getByScenarioId(scenarioId);
+    }
 }

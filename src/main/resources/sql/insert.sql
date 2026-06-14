@@ -6,9 +6,9 @@
 INSERT INTO users (username, email, role, password_hash)
 VALUES
     ('admin', 'admin@smarthome.com', 'ADMIN', '$2a$12$wLyZU0bA4OjlqtFs21Oh8eb0TUG/6mllW99/XM1t/uyC9xSNM0NWu'),
-    ('john', 'john@gmail.com', 'WRITER', '$2a$12$MAqPpbZjY5oChuSrf6sF5O8enX3lZ9XEgRiJTmQvfoYMC0BFU2iU'),
-    ('anna', 'anna@gmail.com', 'READER', '$2a$12$MAqPpbZjY5oChuSrf6sF5O8enX3lZ9XEgRiJTmQvfoYMC0BFU2iU'),
-    ('alex', 'alex@gmail.com', 'READER', '$2a$12$MAqPpbZjY5oChuSrf6sF5O8enX3lZ9XEgRiJTmQvfoYMC0BFU2iU');
+    ('john', 'john@gmail.com', 'WRITER', '$2a$12$wLyZU0bA4OjlqtFs21Oh8eb0TUG/6mllW99/XM1t/uyC9xSNM0NWu'),
+    ('anna', 'anna@gmail.com', 'READER', '$2a$12$wLyZU0bA4OjlqtFs21Oh8eb0TUG/6mllW99/XM1t/uyC9xSNM0NWu'),
+    ('alex', 'alex@gmail.com', 'READER', '$2a$12$wLyZU0bA4OjlqtFs21Oh8eb0TUG/6mllW99/XM1t/uyC9xSNM0NWu');
 
 --------------------------------------------------
 -- 2. HOMES (Админ тут отсутствует)

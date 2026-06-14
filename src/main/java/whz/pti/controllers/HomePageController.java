@@ -309,16 +309,44 @@ public class HomePageController {
     }
 
 
-    private void handleScenarioClick(Scenario scenario, Button button) {
-        boolean newStatus = !scenario.getIsActive();
+    private void handleScenarioClick(
+            Scenario scenario,
+            Button button
+    )
+    {
+        boolean newStatus =
+                !scenario.getIsActive();
+
         scenario.setIsActive(newStatus);
 
-        scenarioService.update(scenario, scenario);
+        scenarioService.update(
+                scenario,
+                scenario
+        );
+
+        Long currentUserId =
+                UserSession.getCurrentUserId();
+
+        scenarioService.executeScenario(
+                scenario,
+                currentUserId
+        );
 
         setButtonStyle(button, newStatus);
 
-        System.out.println("Szenario '" + scenario.getName() + "' ist jetzt: " + (newStatus ? "AKTIV" : "INAKTIV"));
+        Room room =
+                roomListView
+                        .getSelectionModel()
+                        .getSelectedItem();
+
+        if (room != null) {
+
+            loadDevices(room.getId());
+
+            loadLogs(room.getId());
+        }
     }
+
 
     private void setButtonStyle(Button button, boolean isActive) {
         if (isActive) {

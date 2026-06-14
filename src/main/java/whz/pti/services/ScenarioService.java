@@ -13,4 +13,5 @@ public interface ScenarioService {
     Optional<Scenario> getScenario(Long scenarioId) throws SQLException;
     List<Scenario> getScenarios();
     List<Scenario> getScenariosByUserId(Long userId);
+    void executeScenario(Scenario scenario, Long userId);
 }
