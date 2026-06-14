@@ -6,6 +6,8 @@ import whz.pti.repositories.UserRepo;
 import whz.pti.services.AuthService;
 import whz.pti.utils.PasswordService;
 
+import java.util.Optional;
+
 public class AuthServiceImpl implements AuthService {
     private final UserRepo userRepo;
 
@@ -33,6 +35,8 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(()-> new Exception("Benutzername oder Passwort falsch"));
 
         System.out.println(user);
+        String hashedPassword = PasswordService.hashPassword(user.getPassword());
+        System.out.println(hashedPassword);
 
         boolean passwordMatch = PasswordService.verifyPassword(password, user.getPassword());
 
@@ -43,17 +47,10 @@ public class AuthServiceImpl implements AuthService {
         return new SafeUser(user.getId(), user.getName(), user.getEmail(), user.getRole());
     }
 
-//    @Override
-//    public SafeUser getUser(Long userId) {
-//        Optional<User> result = userRepo.getById(userId);
-//        SafeUser user = new SafeUser();
-//
-//        result.ifPresent(u -> {
-//            user.setName(u.getName());
-//            user.setEmail(u.getEmail());
-//            user.setRole(u.getRole());
-//        });
-//
-//        return user;
-//    }
+
+    @Override
+    public Optional<User> getUser(Long userId) {
+        Optional<User> user = userRepo.getById(userId);
+        return user;
+    }
 }

@@ -1,26 +1,23 @@
 package whz.pti.models;
 
-import whz.pti.repositories.implementation.DeviceRepoImpl;
-import whz.pti.repositories.implementation.UserRepoImpl;
 import whz.pti.utils.annotations.Column;
-import whz.pti.utils.annotations.ForeignKey;
 
 import java.time.LocalDateTime;
 
 public class DeviceStateLog {
     private Long id;
-    @ForeignKey(column = "device_id", repoClass = DeviceRepoImpl.class)
-    private Device device;
+    @Column(name = "device_id")
+    private Long  device;
     @Column(name = "timestamp")
     private LocalDateTime time;
     @Column(name = "state_value")
     private String state;
-    @ForeignKey(column = "user_id", repoClass = UserRepoImpl.class)
-    private User user;
+    @Column(name = "user_id")
+    private Long user;
 
     public DeviceStateLog() {}
 
-    public DeviceStateLog(Long id, Device device, LocalDateTime time, String state, User user) {
+    public DeviceStateLog(Long id, Long device, LocalDateTime time, String state, Long  user) {
         this.id = id;
         this.device = device;
         this.time = time;
@@ -36,11 +33,11 @@ public class DeviceStateLog {
         this.id = id;
     }
 
-    public Device getDevice() {
+    public Long getDevice() {
         return device;
     }
 
-    public void setDevice(Device device) {
+    public void setDevice(Long device) {
         this.device = device;
     }
 
@@ -60,11 +57,11 @@ public class DeviceStateLog {
         this.state = state;
     }
 
-    public User getUser() {
+    public Long getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(Long user) {
         this.user = user;
     }
 

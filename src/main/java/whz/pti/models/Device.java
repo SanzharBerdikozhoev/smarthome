@@ -18,6 +18,7 @@ public class Device {
     private Room room;
     @ForeignKey(column = "device_type_id", repoClass = DeviceTypeRepoImpl.class)
     private DeviceType deviceType;
+    @Column(name = "installation_date")
     private LocalDate installDate;
     @Column(name = "is_active")
     private boolean active;

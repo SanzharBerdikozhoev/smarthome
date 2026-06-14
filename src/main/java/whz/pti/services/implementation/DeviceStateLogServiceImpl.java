@@ -36,4 +36,9 @@ public class DeviceStateLogServiceImpl implements DeviceStateLogService {
     public List<DeviceStateLog> getDeviceStateLogs() {
         return (List<DeviceStateLog>)  deviceStateLogRepo.getAll();
     }
+
+    @Override
+    public List<DeviceStateLog> getLogsByRoomId(Long roomId) {
+        return deviceStateLogRepo.getLogsByRoomId(roomId);
+    }
 }

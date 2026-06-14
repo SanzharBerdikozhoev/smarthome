@@ -13,7 +13,7 @@ public class DeviceUser {
     private User user;
     private LocalDate assignedSince;
 
-    private DeviceUser() {}
+    public DeviceUser() {}
 
     public DeviceUser(Long id, Device device, User user, LocalDate assignedSince) {
         this.device = device;
