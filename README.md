@@ -32,7 +32,7 @@ This is a complete JavaFX desktop application for managing smart home devices, a
 ├── src
 │   └── main
 │       ├── java
-│       │   ├── Launcher.java
+│       │   ├── SmarthomeApplication.java
 │       │   └── whz
 │       │       └── pti
 │       │           ├── controllers

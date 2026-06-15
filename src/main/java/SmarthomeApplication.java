@@ -1,7 +1,7 @@
 import whz.pti.Main;
 import whz.pti.utils.UserInitializer;
 
-public class Launcher {
+public class SmarthomeApplication {
     public static void main(String[] args) {
         try {
             UserInitializer.init();

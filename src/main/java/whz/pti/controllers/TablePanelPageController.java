@@ -7,67 +7,43 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import whz.pti.models.*;
-import whz.pti.services.ScenarioService;
 import whz.pti.utils.AppContext;
 import whz.pti.repositories.GeneralRepo;
 import whz.pti.utils.UserSession;
 import whz.pti.utils.annotations.ForeignKey;
 
 import java.lang.reflect.Field;
-import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.*;
 
-import static whz.pti.utils.AppContext.*;
-
 public class TablePanelPageController {
-    @FXML private ListView<String> tablesListView;
-    @FXML private Label labelCurrentTableName;
-    @FXML private TableView<Object> genericTable;
-    @FXML private HBox actionButtonsContainer;
-    @FXML private Button buttonAdd;
-    @FXML private Button buttonEdit;
-    @FXML private Button buttonDelete;
+    @FXML
+    private ListView<String> tablesListView;
+    @FXML
+    private Label labelCurrentTableName;
+    @FXML
+    private TableView<Object> genericTable;
+    @FXML
+    private HBox actionButtonsContainer;
+    @FXML
+    private Button buttonAdd;
+    @FXML
+    private Button buttonEdit;
+    @FXML
+    private Button buttonDelete;
 
     private final ObservableList<String> tables = FXCollections.observableArrayList();
     private GeneralRepo<Object> currentRepo;
     private Class<?> currentClass;
-    private final ScenarioService scenarioService = getInstance().getScenarioService();
-
 
     @FXML
     public void initialize() {
         applyPermissions();
 
-
-        ObservableList<String> tables = FXCollections.observableArrayList();
-
         if (UserSession.isAdmin()) {
-
-            tables.addAll(
-                    "Users",
-                    "Room",
-                    "Home",
-                    "Scenario",
-                    "Device",
-                    "DeviceScenario",
-                    "DeviceStateLog",
-                    "DeviceType",
-                    "DeviceUser"
-            );
-
-        } else {
-
-            tables.addAll(
-                    "Home",
-                    "Room",
-                    "Device",
-                    "Scenario"
-            );
+            tables.add("Users");
         }
 
+        tables.addAll("Room", "Home", "Scenario", "Device", "DeviceScenario", "DeviceStateLog", "DeviceType", "DeviceUser");
         tablesListView.setItems(tables);
 
         tablesListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -79,13 +55,7 @@ public class TablePanelPageController {
                     case "Users" -> loadTable(context.getUserRepo(), User.class);
                     case "Room" -> loadTable(context.getRoomRepo(), Room.class);
                     case "Home" -> loadTable(context.getHomeRepo(), Home.class);
-                    case "Scenario" -> {
-                        if (UserSession.isAdmin()) {
-                            loadTable(context.getScenarioRepo(), Scenario.class);
-                        } else {
-                            loadUserScenarios();
-                        }
-                    }
+                    case "Scenario" -> loadTable(context.getScenarioRepo(), Scenario.class);
                     case "Device" -> loadTable(context.getDeviceRepo(), Device.class);
                     case "DeviceScenario" -> loadTable(context.getDeviceScenarioRepo(), DeviceScenario.class);
                     case "DeviceStateLog" -> loadTable(context.getDeviceStateLogRepo(), DeviceStateLog.class);
@@ -97,11 +67,11 @@ public class TablePanelPageController {
     }
 
     private void applyPermissions() {
-        actionButtonsContainer.setVisible(true);
-
-        buttonAdd.setDisable(false);
-        buttonEdit.setDisable(false);
-        buttonDelete.setDisable(false);
+        boolean isAdmin = UserSession.isAdmin();
+        actionButtonsContainer.setVisible(isAdmin);
+        buttonAdd.setDisable(!isAdmin);
+        buttonEdit.setDisable(!isAdmin);
+        buttonDelete.setDisable(!isAdmin);
     }
 
     @SuppressWarnings("unchecked")
@@ -109,26 +79,77 @@ public class TablePanelPageController {
         this.currentRepo = (GeneralRepo<Object>) repo;
         this.currentClass = entityClass;
 
-        genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        genericTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         genericTable.getColumns().clear();
         genericTable.getItems().clear();
 
-        createColumnsForClass(entityClass);
+        for (Field field : entityClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
 
-        List<Object> data = (List<Object>) currentRepo.getAll();
+            String fieldName = field.getName();
+            String prettyHeader = fieldName.replaceAll("([a-z])([A-Z])", "$1 $2");
+            prettyHeader = prettyHeader.substring(0, 1).toUpperCase() + prettyHeader.substring(1);
 
-        if (!UserSession.isAdmin()) {
-            data = data.stream()
-                    .filter(this::isUserTable)
-                    .toList();
+            TableColumn<Object, Object> column = new TableColumn<>(prettyHeader);
+
+            column.setCellValueFactory(cellData -> {
+                try {
+                    Object item = cellData.getValue();
+                    field.setAccessible(true);
+                    Object value = field.get(item);
+                    return new javafx.beans.property.SimpleObjectProperty<>(value != null ? value : "-");
+                } catch (Exception e) {
+                    return new javafx.beans.property.SimpleObjectProperty<>("[Fehler]");
+                }
+            });
+
+            if (fieldName.equalsIgnoreCase("id")) {
+                column.setStyle("-fx-alignment: CENTER;");
+            }
+
+            Class<?> fieldType = field.getType();
+            if (fieldType == boolean.class || fieldType == Boolean.class) {
+                column.setCellFactory(tc -> new TableCell<Object, Object>() {
+                    @Override
+                    protected void updateItem(Object item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                        } else {
+                            if (item instanceof String && "-".equals(item)) {
+                                setText("-");
+                            } else if (item instanceof Boolean) {
+                                setText((boolean) item ? "Yes" : "No");
+                            } else {
+                                setText(item.toString());
+                            }
+                        }
+                    }
+                });
+            }
+
+            genericTable.getColumns().add(column);
         }
 
+        List<Object> data = (List<Object>) currentRepo.getAll();
         genericTable.setItems(FXCollections.observableArrayList(data));
 
         javafx.application.Platform.runLater(() -> {
-            for (TableColumn<Object, ?> col : genericTable.getColumns()) {
+            ObservableList<TableColumn<Object, ?>> columns = genericTable.getColumns();
+            if (columns.isEmpty()) return;
+
+            for (int i = 0; i < columns.size(); i++) {
+                TableColumn<Object, ?> col = columns.get(i);
+
                 autoFitColumnWidth(col);
+                double textWidth = col.getPrefWidth();
+
+                col.setMinWidth(textWidth);
+                col.setMaxWidth(Double.MAX_VALUE);
             }
+
+            genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+            genericTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         });
     }
 
@@ -145,21 +166,15 @@ public class TablePanelPageController {
                     double cellW = t.getLayoutBounds().getWidth() + 25.0;
                     if (cellW > maxW) maxW = cellW;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         column.setPrefWidth(maxW);
     }
 
     @FXML
     public void handleAdd() {
-        if (currentClass == null) return;
-
-        if (currentClass == Scenario.class && !UserSession.isAdmin()) {
-            handleAddUserScenario();
-            return;
-        }
-
-        if (currentRepo == null) return;
+        if (currentClass == null || currentRepo == null) return;
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Neuen Eintrag hinzufügen in " + currentClass.getSimpleName());
@@ -169,8 +184,13 @@ public class TablePanelPageController {
         form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
         Map<Field, Control> fieldsMap = new HashMap<>();
 
+        List<Field> keyFields = determineKeyFields(currentClass);
+        boolean hasSingleId = keyFields.size() == 1 && keyFields.get(0).getName().equalsIgnoreCase("id");
+
         for (Field field : currentClass.getDeclaredFields()) {
-            if (field.getName().equalsIgnoreCase("id") || field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
+            if (hasSingleId && field.getName().equalsIgnoreCase("id")) {
+                continue;
+            }
 
             Label label = new Label(field.getName() + ":");
             Control inputControl = createInputControlForField(field, null);
@@ -187,13 +207,19 @@ public class TablePanelPageController {
                     Object newEntity = currentClass.getDeclaredConstructor().newInstance();
                     fillEntityFromForm(newEntity, fieldsMap);
 
-                    Object savedObject = currentRepo.save(newEntity);
-                    if (savedObject != null) {
-                        genericTable.getItems().add(savedObject);
-                        loadTable(currentRepo, currentClass);
+                    try {
+                        currentRepo.save(newEntity);
+                    } catch (Exception e) {
+                        if (!hasSingleId && e.getMessage() != null && e.getMessage().contains("id")) {
+                            System.out.println("Ложное исключение генерации ID успешно проигнорировано для " + currentClass.getSimpleName());
+                        } else {
+                            throw e;
+                        }
                     }
+
+                    loadTable(currentRepo, currentClass);
                 } catch (Exception e) {
-                    showErrorAlert("Fehler beim Speichern der Daten: " + e.getMessage());
+                    showErrorAlert("Fehler beim Speichern: " + e.getMessage());
                 }
             }
         });
@@ -208,10 +234,8 @@ public class TablePanelPageController {
             return;
         }
 
-        if (currentClass == Scenario.class && !UserSession.isAdmin()) {
-            handleEditUserScenario((Scenario) selectedItem);
-            return;
-        }
+        List<Field> keyFields = determineKeyFields(currentClass);
+        boolean hasSingleId = keyFields.size() == 1 && keyFields.get(0).getName().equalsIgnoreCase("id");
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Eintrag bearbeiten in " + currentClass.getSimpleName());
@@ -221,17 +245,22 @@ public class TablePanelPageController {
         form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
         Map<Field, Control> fieldsMap = new HashMap<>();
 
+        Map<Field, Object> oldKeyValues = new HashMap<>();
+
         try {
-            Object idValue = null;
+            Object singleIdValue = null;
 
             for (Field field : currentClass.getDeclaredFields()) {
-                if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
                 field.setAccessible(true);
                 Object currentValue = field.get(selectedItem);
 
-                if (field.getName().equalsIgnoreCase("id")) {
-                    idValue = currentValue;
+                if (hasSingleId && field.getName().equalsIgnoreCase("id")) {
+                    singleIdValue = currentValue;
                     continue;
+                }
+
+                if (!hasSingleId && keyFields.contains(field)) {
+                    oldKeyValues.put(field, currentValue);
                 }
 
                 Label label = new Label(field.getName() + ":");
@@ -242,20 +271,50 @@ public class TablePanelPageController {
             }
 
             dialog.getDialogPane().setContent(form);
-            final Object finalId = idValue;
+            final Object finalId = singleIdValue;
 
             dialog.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.OK && finalId != null) {
+                if (response == ButtonType.OK) {
                     try {
                         Object updatedEntity = currentClass.getDeclaredConstructor().newInstance();
                         fillEntityFromForm(updatedEntity, fieldsMap);
 
-                        Object result = currentRepo.updateById(updatedEntity, (Long) finalId);
-                        if (result != null) {
-                            loadTable(currentRepo, currentClass);
+                        if (isDuplicateCompositeKey(selectedItem, updatedEntity)) {
+                            System.out.println("Keine Änderungen festgestellt. Funktion wird abgebrochen.");
+                            return;
                         }
+
+                        if (hasSingleId) {
+                            Field idField = currentClass.getDeclaredField("id");
+                            idField.setAccessible(true);
+                            idField.set(updatedEntity, finalId);
+
+                            currentRepo.updateById(updatedEntity, (Long) finalId);
+                        } else {
+                            List<?> allExistingItems = (List<?>) currentRepo.getAll();
+                            boolean duplicateExists = false;
+
+                            for (Object existingItem : allExistingItems) {
+                                if (isDuplicateCompositeKey(existingItem, updatedEntity)) {
+                                    duplicateExists = true;
+                                    break;
+                                }
+                            }
+
+                            if (duplicateExists) {
+                                showErrorAlert("Diese Verknüpfung existiert bereits in der Datenbank! " +
+                                        "Änderung abgebrochen, um Datenverlust zu verhindern.");
+                                return;
+                            }
+
+                            currentRepo.delete(selectedItem);
+                            currentRepo.save(updatedEntity);
+                        }
+
+                        loadTable(currentRepo, currentClass);
+
                     } catch (Exception e) {
-                        showErrorAlert("Fehler beim Aktualisieren der Daten: " + e.getMessage());
+                        showErrorAlert("Fehler beim Aktualisieren: " + e.getMessage());
                     }
                 }
             });
@@ -278,11 +337,6 @@ public class TablePanelPageController {
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {
                 try {
-                    if (currentClass == Scenario.class && !UserSession.isAdmin()) {
-                        scenarioService.delete((Scenario) selectedItem);
-                        loadUserScenarios();
-                        return;
-                    }
                     currentRepo.delete(selectedItem);
                     genericTable.getItems().remove(selectedItem);
                 } catch (RuntimeException e) {
@@ -348,7 +402,7 @@ public class TablePanelPageController {
             ComboBox<Object> comboBox = new ComboBox<>();
             comboBox.setMaxWidth(Double.MAX_VALUE);
 
-            AppContext context = getInstance();
+            AppContext context = AppContext.getInstance();
             GeneralRepo<?> relatedRepo = null;
 
             if (fieldType == User.class) relatedRepo = context.getUserRepo();
@@ -495,182 +549,6 @@ public class TablePanelPageController {
         Alert alert = new Alert(Alert.AlertType.ERROR, content, ButtonType.OK);
         alert.setHeaderText(null);
         alert.showAndWait();
-    }
-
-    private boolean isUserTable(Object item) {
-        Long userId = UserSession.getCurrentUserId();
-
-        if (item instanceof Home home) {
-            return home.getUser() != null && home.getUser().getId().equals(userId);
-        }
-
-        if (item instanceof Room room) {
-            return room.getHome() != null
-                    && room.getHome().getUser() != null
-                    && room.getHome().getUser().getId().equals(userId);
-        }
-
-        if (item instanceof Device device) {
-            return device.getRoom() != null
-                    && device.getRoom().getHome() != null
-                    && device.getRoom().getHome().getUser() != null
-                    && device.getRoom().getHome().getUser().getId().equals(userId);
-        }
-
-        return false;
-    }
-
-    private void loadUserScenarios() {
-        this.currentRepo = null;
-        this.currentClass = Scenario.class;
-
-        genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
-        genericTable.getColumns().clear();
-        genericTable.getItems().clear();
-
-        createColumnsForClass(Scenario.class);
-
-        Long userId = UserSession.getCurrentUserId();
-
-        List<Object> data = scenarioService.getScenariosByUserId(userId)
-                .stream()
-                .map(s -> (Object) s)
-                .toList();
-
-        genericTable.setItems(FXCollections.observableArrayList(data));
-    }
-
-    private void createColumnsForClass(Class<?> entityClass) {
-        genericTable.getColumns().clear();
-
-        for (Field field : entityClass.getDeclaredFields()) {
-            if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) {
-                continue;
-            }
-
-            String fieldName = field.getName();
-            String prettyHeader = fieldName.replaceAll("([a-z])([A-Z])", "$1 $2");
-            prettyHeader = prettyHeader.substring(0, 1).toUpperCase() + prettyHeader.substring(1);
-
-            TableColumn<Object, Object> column = new TableColumn<>(prettyHeader);
-
-            column.setCellValueFactory(cellData -> {
-                try {
-                    Object item = cellData.getValue();
-                    field.setAccessible(true);
-                    Object value = field.get(item);
-                    return new javafx.beans.property.SimpleObjectProperty<>(value != null ? value : "-");
-                } catch (Exception e) {
-                    return new javafx.beans.property.SimpleObjectProperty<>("[Fehler]");
-                }
-            });
-
-            if (fieldName.equalsIgnoreCase("id")) {
-                column.setStyle("-fx-alignment: CENTER;");
-            }
-
-            genericTable.getColumns().add(column);
-        }
-    }
-
-    private void handleAddUserScenario() {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Neues Szenario hinzufügen");
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        TextField nameField = new TextField();
-        TextField descriptionField = new TextField();
-        CheckBox activeCheckBox = new CheckBox("Aktiv");
-        activeCheckBox.setSelected(true);
-        TextField startTimeField = new TextField();
-        TextField endTimeField = new TextField();
-
-        startTimeField.setPromptText("HH:mm");
-        endTimeField.setPromptText("HH:mm");
-
-        VBox form = new VBox(10,
-                new Label("Name:"), nameField,
-                new Label("Beschreibung:"), descriptionField,
-                activeCheckBox,
-                new Label("Startzeit:"), startTimeField,
-                new Label("Endzeit:"), endTimeField
-        );
-
-        form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
-        dialog.getDialogPane().setContent(form);
-
-        dialog.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                try {
-                    Scenario scenario = new Scenario();
-
-                    scenario.setName(nameField.getText().trim());
-                    scenario.setDescription(descriptionField.getText().trim());
-                    scenario.setIsActive(activeCheckBox.isSelected());
-                    scenario.setStartTime(java.time.LocalTime.parse(startTimeField.getText().trim()));
-                    scenario.setEndTime(java.time.LocalTime.parse(endTimeField.getText().trim()));
-
-                    scenarioService.save(scenario);
-
-                    loadUserScenarios();
-
-                } catch (Exception e) {
-                    showErrorAlert("Fehler beim Erstellen des Szenarios: " + e.getMessage());
-                }
-            }
-        });
-    }
-
-    private void handleEditUserScenario(Scenario selectedScenario) {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Szenario bearbeiten");
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        TextField nameField = new TextField(selectedScenario.getName());
-        TextField descriptionField = new TextField(selectedScenario.getDescription());
-
-        CheckBox activeCheckBox = new CheckBox("Aktiv");
-        activeCheckBox.setSelected(Boolean.TRUE.equals(selectedScenario.getIsActive()));
-
-        TextField startTimeField = new TextField(
-                selectedScenario.getStartTime() != null ? selectedScenario.getStartTime().toString() : ""
-        );
-
-        TextField endTimeField = new TextField(
-                selectedScenario.getEndTime() != null ? selectedScenario.getEndTime().toString() : ""
-        );
-
-        VBox form = new VBox(10,
-                new Label("Name:"), nameField,
-                new Label("Beschreibung:"), descriptionField,
-                activeCheckBox,
-                new Label("Startzeit:"), startTimeField,
-                new Label("Endzeit:"), endTimeField
-        );
-
-        form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
-        dialog.getDialogPane().setContent(form);
-
-        dialog.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                try {
-                    Scenario updatedScenario = new Scenario();
-
-                    updatedScenario.setName(nameField.getText().trim());
-                    updatedScenario.setDescription(descriptionField.getText().trim());
-                    updatedScenario.setIsActive(activeCheckBox.isSelected());
-                    updatedScenario.setStartTime(LocalTime.parse(startTimeField.getText().trim()));
-                    updatedScenario.setEndTime(LocalTime.parse(endTimeField.getText().trim()));
-
-                    scenarioService.update(updatedScenario, selectedScenario);
-
-                    loadUserScenarios();
-
-                } catch (Exception e) {
-                    showErrorAlert("Fehler beim Aktualisieren des Szenarios: " + e.getMessage());
-                }
-            }
-        });
     }
 
     private GeneralRepo<?> getRepoFromContextByClass(Class<?> repoClass) {
