@@ -1,7 +1,10 @@
 package whz.pti.services.implementation;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import whz.pti.models.Device;
 import whz.pti.models.DeviceScenario;
+import whz.pti.models.DeviceScenarioRole;
 import whz.pti.models.Scenario;
 import whz.pti.repositories.ScenarioRepo;
 import whz.pti.repositories.implementation.DeviceRepoImpl;
@@ -17,8 +20,7 @@ import java.util.Optional;
 
 public class ScenarioServiceImpl implements ScenarioService {
     private ScenarioRepo scenarioRepo = new ScenarioRepoImpl();
-    private final DeviceScenarioService deviceScenarioService =
-            new DeviceScenarioServiceImpl();
+    private final DeviceScenarioService deviceScenarioService = new DeviceScenarioServiceImpl();
 
     private final DeviceService deviceService =
             new DeviceServiceImpl(new DeviceRepoImpl());
@@ -59,16 +61,16 @@ public class ScenarioServiceImpl implements ScenarioService {
             Scenario scenario,
             Long userId
     ) {
-
         List<DeviceScenario> deviceScenarios =
                 deviceScenarioService.getByScenarioId(
                         scenario.getId()
                 );
 
+
         for (DeviceScenario ds : deviceScenarios) {
 
-            if (!"OUTPUT".equals(ds.getRole())) {
-                continue;
+            if (!DeviceScenarioRole.OUTPUT.equals(ds.getRole())) {
+                 continue;
             }
 
             Device device = ds.getDevice();
@@ -83,6 +85,7 @@ public class ScenarioServiceImpl implements ScenarioService {
                     userId
             );
         }
+
     }
 
 
