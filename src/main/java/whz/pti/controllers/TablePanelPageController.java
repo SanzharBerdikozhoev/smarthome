@@ -167,13 +167,13 @@ public class TablePanelPageController {
 
         VBox form = new VBox(10);
         form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
-        Map<Field, Control> fieldsMap = new HashMap<>(); // Используем абстрактный Control
+        Map<Field, Control> fieldsMap = new HashMap<>();
 
         for (Field field : currentClass.getDeclaredFields()) {
             if (field.getName().equalsIgnoreCase("id") || field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
 
             Label label = new Label(field.getName() + ":");
-            Control inputControl = createInputControlForField(field, null); // Создаем нужный инпут
+            Control inputControl = createInputControlForField(field, null);
 
             form.getChildren().addAll(label, inputControl);
             fieldsMap.put(field, inputControl);
@@ -376,26 +376,21 @@ public class TablePanelPageController {
             return comboBox;
         }
 
-        // СЦЕНАРИЙ 2: Поле является ENUM (Новая логика)
         if (fieldType.isEnum()) {
             ComboBox<Object> comboBox = new ComboBox<>();
             comboBox.setMaxWidth(Double.MAX_VALUE);
 
-            // Получаем все константы этого Enum (например: [USER, ADMIN] или [ON, OFF])
             Object[] enumConstants = fieldType.getEnumConstants();
             comboBox.setItems(FXCollections.observableArrayList(enumConstants));
 
-            // Если редактируем — выбираем текущее значение
             if (currentValue != null) {
                 comboBox.getSelectionModel().select(currentValue);
             } else if (enumConstants.length > 0) {
-                // По умолчанию выбираем первый элемент из списка, чтобы поле не было пустым
                 comboBox.getSelectionModel().select(0);
             }
             return comboBox;
         }
 
-        // СЦЕНАРИЙ 3: Обычное текстовое поле
         TextField textField = new TextField();
         if (currentValue != null) {
             textField.setText(currentValue.toString());
