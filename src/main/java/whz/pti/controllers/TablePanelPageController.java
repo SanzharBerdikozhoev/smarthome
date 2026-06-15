@@ -211,7 +211,7 @@ public class TablePanelPageController {
                         currentRepo.save(newEntity);
                     } catch (Exception e) {
                         if (!hasSingleId && e.getMessage() != null && e.getMessage().contains("id")) {
-                            System.out.println("Ложное исключение генерации ID успешно проигнорировано для " + currentClass.getSimpleName());
+                            System.out.println("Die falsche Ausnahme bei der ID-Generierung wurde erfolgreich ignoriert für " + currentClass.getSimpleName());
                         } else {
                             throw e;
                         }
