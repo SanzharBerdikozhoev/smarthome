@@ -15,6 +15,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import whz.pti.models.*;
 import whz.pti.services.*;
 import whz.pti.utils.AppContext;
@@ -127,6 +129,25 @@ public class HomePageController {
         addRoomButton.setOnAction(e -> openAddRoomDialog());
         addDeviceButton.setOnAction(e -> openAddDeviceDialog());
         addScenarioButton.setOnAction(e -> openAddScenarioDialog());
+
+        if (isReadOnly()) {
+            addHomeButton.setVisible(false);
+            addHomeButton.setManaged(false);
+
+            addRoomButton.setVisible(false);
+            addRoomButton.setManaged(false);
+
+            addDeviceButton.setVisible(false);
+            addDeviceButton.setManaged(false);
+
+            addScenarioButton.setVisible(false);
+            addScenarioButton.setManaged(false);
+        }
+    }
+
+    private boolean isReadOnly() {
+        Role role = UserSession.getCurrentUser().getRole();
+        return role == Role.READER;
     }
 
     private String getDeviceName(Long deviceID) {
@@ -149,7 +170,6 @@ public class HomePageController {
         try {
             Long currentUserId = UserSession.getCurrentUserId();
             if (currentUserId == null) {
-                System.err.println("User is not logged in!");
                 return;
             }
 
@@ -179,9 +199,12 @@ public class HomePageController {
 
                 deleteButton.setOnAction(event -> deleteScenario(scenario));
 
-                scenarioBox.getChildren().addAll(scenarioButton, deleteButton);
-
-                scenariosContainer.getChildren().add(scenarioBox);
+                if (!isReadOnly()) {
+                    scenarioBox.getChildren().addAll(scenarioButton, deleteButton);
+                }else {
+                    scenariosContainer.getChildren().add(scenarioBox);
+                    scenarioButton.setDisable(true);
+                }
             }
 
         } catch (Exception e) {
@@ -294,6 +317,7 @@ public class HomePageController {
                 device.isActive() ? "device-status-on" : "device-status-off"
         );
 
+
         Button toggleButton =
                 new Button(
                         device.isActive()
@@ -308,11 +332,11 @@ public class HomePageController {
         toggleButton.setOnAction(event -> {
             boolean nextState = !device.isActive();
             Long currentUserId = whz.pti.utils.UserSession.getCurrentUserId();
+            if (!isReadOnly()) {
+                deviceService.updateDeviceState(device.getId(), nextState, currentUserId);
 
-            deviceService.updateDeviceState(device.getId(), nextState, currentUserId);
-
-            device.setActive(nextState);
-
+                device.setActive(nextState);
+            }
             Long currentRoomId = roomListView.getSelectionModel().getSelectedItem().getId();
             loadDevices(currentRoomId);
             loadLogs(currentRoomId);
@@ -321,8 +345,9 @@ public class HomePageController {
         Button deleteButton = new Button("Löschen");
         deleteButton.getStyleClass().add("delete-button");
 
-        deleteButton.setOnAction(event -> deleteDevice(device));
-
+        if (!isReadOnly()) {
+            deleteButton.setOnAction(event -> deleteDevice(device));
+        }
         card.getChildren().addAll(
                 nameLabel,
                 typeLabel,
@@ -334,8 +359,7 @@ public class HomePageController {
         return card;
     }
 
-
-    private void handleScenarioClick(
+        private void handleScenarioClick(
             Scenario scenario,
             Button button
     )
@@ -367,7 +391,7 @@ public class HomePageController {
 
         if (room != null) {
 
-            loadDevices(room.getId());
+              loadDevices(room.getId());
 
             loadLogs(room.getId());
         }
