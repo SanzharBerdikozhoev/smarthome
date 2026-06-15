@@ -14,10 +14,16 @@ public class HeaderController {
 
     @FXML
     public void initialize() {
-        userStatusLabel.setText("Angemeldet als: " + UserSession.getCurrentUser().getName());
+        userStatusLabel.setText(
+            "Angemeldet als: " + UserSession.getCurrentUser().getName()
+        );
         logoutButton.setOnAction(e -> handleLogout());
-        homePageButton.setOnAction(e -> PageSwitcher.switchTo("HomePage", homePageButton));
-        tablePanelButton.setOnAction(e -> PageSwitcher.switchTo("TablePanelPage", tablePanelButton));
+        homePageButton.setOnAction(e ->
+            PageSwitcher.switchTo("HomePage", homePageButton)
+        );
+        tablePanelButton.setOnAction(e ->
+            PageSwitcher.switchTo("TablePanelPage", tablePanelButton)
+        );
     }
 
     private void handleLogout() {

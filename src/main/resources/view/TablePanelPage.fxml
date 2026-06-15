@@ -67,14 +67,34 @@
                 </TableView>
 
                 <HBox fx:id="actionButtonsContainer"
-                      alignment="CENTER_RIGHT"
+                      alignment="CENTER_LEFT"
                       prefHeight="50.0"
                       spacing="12.0">
+                    <Button fx:id="buttonExport"
+                            mnemonicParsing="false"
+                            onAction="#handleExport"
+                            prefHeight="38.0"
+                            prefWidth="140.0"
+                            style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;"
+                            styleClass="action-button"
+                            text="XML exportieren"/>
+                    <Button fx:id="buttonExportAll"
+                            mnemonicParsing="false"
+                            onAction="#handleExportAll"
+                            prefHeight="38.0"
+                            prefWidth="200.0"
+                            style="-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold;"
+                            styleClass="action-button"
+                            text="Gesamte DB exportieren"/>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
                     <Button fx:id="buttonAdd"
                             mnemonicParsing="false"
                             onAction="#handleAdd"
                             prefHeight="38.0"
                             prefWidth="120.0"
+                            style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold;"
                             styleClass="action-button"
                             text="Hinzufügen"/>
                     <Button fx:id="buttonEdit"
@@ -82,6 +102,7 @@
                             onAction="#handleEdit"
                             prefHeight="38.0"
                             prefWidth="120.0"
+                            style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;"
                             styleClass="action-button"
                             text="Ändern"/>
                     <Button fx:id="buttonDelete"
@@ -89,6 +110,7 @@
                             onAction="#handleDelete"
                             prefHeight="38.0"
                             prefWidth="120.0"
+                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;"
                             styleClass="action-button"
                             text="Löschen"/>
                 </HBox>

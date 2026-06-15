@@ -1,37 +1,54 @@
 package whz.pti.controllers;
 
+import java.io.File;
+import java.lang.reflect.Field;
+import java.util.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import whz.pti.models.*;
-import whz.pti.utils.AppContext;
 import whz.pti.repositories.GeneralRepo;
+import whz.pti.utils.AlertHelper;
+import whz.pti.utils.AppContext;
 import whz.pti.utils.UserSession;
 import whz.pti.utils.annotations.ForeignKey;
-
-import java.lang.reflect.Field;
-import java.util.*;
+import whz.pti.utils.xml.XmlExporter;
 
 public class TablePanelPageController {
+
     @FXML
     private ListView<String> tablesListView;
+
     @FXML
     private Label labelCurrentTableName;
+
     @FXML
     private TableView<Object> genericTable;
+
     @FXML
     private HBox actionButtonsContainer;
+
     @FXML
     private Button buttonAdd;
+
     @FXML
     private Button buttonEdit;
+
     @FXML
     private Button buttonDelete;
 
-    private final ObservableList<String> tables = FXCollections.observableArrayList();
+    @FXML
+    private Button buttonExport;
+
+    @FXML
+    private Button buttonExportAll;
+
+    private final ObservableList<String> tables =
+        FXCollections.observableArrayList();
     private GeneralRepo<Object> currentRepo;
     private Class<?> currentClass;
 
@@ -43,27 +60,66 @@ public class TablePanelPageController {
             tables.add("Users");
         }
 
-        tables.addAll("Room", "Home", "Scenario", "Device", "DeviceScenario", "DeviceStateLog", "DeviceType", "DeviceUser");
+        tables.addAll(
+            "Room",
+            "Home",
+            "Scenario",
+            "Device",
+            "DeviceScenario",
+            "DeviceStateLog",
+            "DeviceType",
+            "DeviceUser"
+        );
         tablesListView.setItems(tables);
 
-        tablesListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                labelCurrentTableName.setText("Tabelle: " + newVal);
-                AppContext context = AppContext.getInstance();
+        tablesListView
+            .getSelectionModel()
+            .selectedItemProperty()
+            .addListener((obs, oldVal, newVal) -> {
+                if (newVal != null) {
+                    labelCurrentTableName.setText("Tabelle: " + newVal);
+                    AppContext context = AppContext.getInstance();
 
-                switch (newVal) {
-                    case "Users" -> loadTable(context.getUserRepo(), User.class);
-                    case "Room" -> loadTable(context.getRoomRepo(), Room.class);
-                    case "Home" -> loadTable(context.getHomeRepo(), Home.class);
-                    case "Scenario" -> loadTable(context.getScenarioRepo(), Scenario.class);
-                    case "Device" -> loadTable(context.getDeviceRepo(), Device.class);
-                    case "DeviceScenario" -> loadTable(context.getDeviceScenarioRepo(), DeviceScenario.class);
-                    case "DeviceStateLog" -> loadTable(context.getDeviceStateLogRepo(), DeviceStateLog.class);
-                    case "DeviceType" -> loadTable(context.getDeviceTypeRepo(), DeviceType.class);
-                    case "DeviceUser" -> loadTable(context.getDeviceUserRepo(), DeviceUser.class);
+                    switch (newVal) {
+                        case "Users" -> loadTable(
+                            context.getUserRepo(),
+                            User.class
+                        );
+                        case "Room" -> loadTable(
+                            context.getRoomRepo(),
+                            Room.class
+                        );
+                        case "Home" -> loadTable(
+                            context.getHomeRepo(),
+                            Home.class
+                        );
+                        case "Scenario" -> loadTable(
+                            context.getScenarioRepo(),
+                            Scenario.class
+                        );
+                        case "Device" -> loadTable(
+                            context.getDeviceRepo(),
+                            Device.class
+                        );
+                        case "DeviceScenario" -> loadTable(
+                            context.getDeviceScenarioRepo(),
+                            DeviceScenario.class
+                        );
+                        case "DeviceStateLog" -> loadTable(
+                            context.getDeviceStateLogRepo(),
+                            DeviceStateLog.class
+                        );
+                        case "DeviceType" -> loadTable(
+                            context.getDeviceTypeRepo(),
+                            DeviceType.class
+                        );
+                        case "DeviceUser" -> loadTable(
+                            context.getDeviceUserRepo(),
+                            DeviceUser.class
+                        );
+                    }
                 }
-            }
-        });
+            });
     }
 
     private void applyPermissions() {
@@ -84,22 +140,37 @@ public class TablePanelPageController {
         genericTable.getItems().clear();
 
         for (Field field : entityClass.getDeclaredFields()) {
-            if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
+            if (
+                field.isAnnotationPresent(
+                    whz.pti.utils.annotations.ManyToMany.class
+                )
+            ) continue;
 
             String fieldName = field.getName();
-            String prettyHeader = fieldName.replaceAll("([a-z])([A-Z])", "$1 $2");
-            prettyHeader = prettyHeader.substring(0, 1).toUpperCase() + prettyHeader.substring(1);
+            String prettyHeader = fieldName.replaceAll(
+                "([a-z])([A-Z])",
+                "$1 $2"
+            );
+            prettyHeader =
+                prettyHeader.substring(0, 1).toUpperCase() +
+                prettyHeader.substring(1);
 
-            TableColumn<Object, Object> column = new TableColumn<>(prettyHeader);
+            TableColumn<Object, Object> column = new TableColumn<>(
+                prettyHeader
+            );
 
             column.setCellValueFactory(cellData -> {
                 try {
                     Object item = cellData.getValue();
                     field.setAccessible(true);
                     Object value = field.get(item);
-                    return new javafx.beans.property.SimpleObjectProperty<>(value != null ? value : "-");
+                    return new javafx.beans.property.SimpleObjectProperty<>(
+                        value != null ? value : "-"
+                    );
                 } catch (Exception e) {
-                    return new javafx.beans.property.SimpleObjectProperty<>("[Fehler]");
+                    return new javafx.beans.property.SimpleObjectProperty<>(
+                        "[Fehler]"
+                    );
                 }
             });
 
@@ -109,23 +180,27 @@ public class TablePanelPageController {
 
             Class<?> fieldType = field.getType();
             if (fieldType == boolean.class || fieldType == Boolean.class) {
-                column.setCellFactory(tc -> new TableCell<Object, Object>() {
-                    @Override
-                    protected void updateItem(Object item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty || item == null) {
-                            setText(null);
-                        } else {
-                            if (item instanceof String && "-".equals(item)) {
-                                setText("-");
-                            } else if (item instanceof Boolean) {
-                                setText((boolean) item ? "Yes" : "No");
+                column.setCellFactory(tc ->
+                    new TableCell<Object, Object>() {
+                        @Override
+                        protected void updateItem(Object item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (empty || item == null) {
+                                setText(null);
                             } else {
-                                setText(item.toString());
+                                if (
+                                    item instanceof String && "-".equals(item)
+                                ) {
+                                    setText("-");
+                                } else if (item instanceof Boolean) {
+                                    setText((boolean) item ? "Yes" : "No");
+                                } else {
+                                    setText(item.toString());
+                                }
                             }
                         }
                     }
-                });
+                );
             }
 
             genericTable.getColumns().add(column);
@@ -135,7 +210,8 @@ public class TablePanelPageController {
         genericTable.setItems(FXCollections.observableArrayList(data));
 
         javafx.application.Platform.runLater(() -> {
-            ObservableList<TableColumn<Object, ?>> columns = genericTable.getColumns();
+            ObservableList<TableColumn<Object, ?>> columns =
+                genericTable.getColumns();
             if (columns.isEmpty()) return;
 
             for (int i = 0; i < columns.size(); i++) {
@@ -148,8 +224,12 @@ public class TablePanelPageController {
                 col.setMaxWidth(Double.MAX_VALUE);
             }
 
-            genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
-            genericTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            genericTable.setColumnResizePolicy(
+                TableView.UNCONSTRAINED_RESIZE_POLICY
+            );
+            genericTable.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY
+            );
         });
     }
 
@@ -166,8 +246,7 @@ public class TablePanelPageController {
                     double cellW = t.getLayoutBounds().getWidth() + 25.0;
                     if (cellW > maxW) maxW = cellW;
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
         column.setPrefWidth(maxW);
     }
@@ -177,15 +256,22 @@ public class TablePanelPageController {
         if (currentClass == null || currentRepo == null) return;
 
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Neuen Eintrag hinzufügen in " + currentClass.getSimpleName());
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.setTitle(
+            "Neuen Eintrag hinzufügen in " + currentClass.getSimpleName()
+        );
+        dialog
+            .getDialogPane()
+            .getButtonTypes()
+            .addAll(ButtonType.OK, ButtonType.CANCEL);
 
         VBox form = new VBox(10);
         form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
         Map<Field, Control> fieldsMap = new HashMap<>();
 
         List<Field> keyFields = determineKeyFields(currentClass);
-        boolean hasSingleId = keyFields.size() == 1 && keyFields.get(0).getName().equalsIgnoreCase("id");
+        boolean hasSingleId =
+            keyFields.size() == 1 &&
+            keyFields.get(0).getName().equalsIgnoreCase("id");
 
         for (Field field : currentClass.getDeclaredFields()) {
             if (hasSingleId && field.getName().equalsIgnoreCase("id")) {
@@ -204,14 +290,23 @@ public class TablePanelPageController {
         dialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    Object newEntity = currentClass.getDeclaredConstructor().newInstance();
+                    Object newEntity = currentClass
+                        .getDeclaredConstructor()
+                        .newInstance();
                     fillEntityFromForm(newEntity, fieldsMap);
 
                     try {
                         currentRepo.save(newEntity);
                     } catch (Exception e) {
-                        if (!hasSingleId && e.getMessage() != null && e.getMessage().contains("id")) {
-                            System.out.println("Ложное исключение генерации ID успешно проигнорировано для " + currentClass.getSimpleName());
+                        if (
+                            !hasSingleId &&
+                            e.getMessage() != null &&
+                            e.getMessage().contains("id")
+                        ) {
+                            System.out.println(
+                                "Ложное исключение генерации ID успешно проигнорировано для " +
+                                    currentClass.getSimpleName()
+                            );
                         } else {
                             throw e;
                         }
@@ -228,18 +323,29 @@ public class TablePanelPageController {
     @FXML
     @SuppressWarnings("unchecked")
     public void handleEdit() {
-        Object selectedItem = genericTable.getSelectionModel().getSelectedItem();
+        Object selectedItem = genericTable
+            .getSelectionModel()
+            .getSelectedItem();
         if (selectedItem == null) {
-            showWarningAlert("Bitte wählen Sie die Zeile aus, die Sie ändern möchten.");
+            showWarningAlert(
+                "Bitte wählen Sie die Zeile aus, die Sie ändern möchten."
+            );
             return;
         }
 
         List<Field> keyFields = determineKeyFields(currentClass);
-        boolean hasSingleId = keyFields.size() == 1 && keyFields.get(0).getName().equalsIgnoreCase("id");
+        boolean hasSingleId =
+            keyFields.size() == 1 &&
+            keyFields.get(0).getName().equalsIgnoreCase("id");
 
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Eintrag bearbeiten in " + currentClass.getSimpleName());
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.setTitle(
+            "Eintrag bearbeiten in " + currentClass.getSimpleName()
+        );
+        dialog
+            .getDialogPane()
+            .getButtonTypes()
+            .addAll(ButtonType.OK, ButtonType.CANCEL);
 
         VBox form = new VBox(10);
         form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
@@ -264,7 +370,10 @@ public class TablePanelPageController {
                 }
 
                 Label label = new Label(field.getName() + ":");
-                Control inputControl = createInputControlForField(field, currentValue);
+                Control inputControl = createInputControlForField(
+                    field,
+                    currentValue
+                );
 
                 form.getChildren().addAll(label, inputControl);
                 fieldsMap.put(field, inputControl);
@@ -276,11 +385,17 @@ public class TablePanelPageController {
             dialog.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
                     try {
-                        Object updatedEntity = currentClass.getDeclaredConstructor().newInstance();
+                        Object updatedEntity = currentClass
+                            .getDeclaredConstructor()
+                            .newInstance();
                         fillEntityFromForm(updatedEntity, fieldsMap);
 
-                        if (isDuplicateCompositeKey(selectedItem, updatedEntity)) {
-                            System.out.println("Keine Änderungen festgestellt. Funktion wird abgebrochen.");
+                        if (
+                            isDuplicateCompositeKey(selectedItem, updatedEntity)
+                        ) {
+                            System.out.println(
+                                "Keine Änderungen festgestellt. Funktion wird abgebrochen."
+                            );
                             return;
                         }
 
@@ -289,21 +404,33 @@ public class TablePanelPageController {
                             idField.setAccessible(true);
                             idField.set(updatedEntity, finalId);
 
-                            currentRepo.updateById(updatedEntity, (Long) finalId);
+                            currentRepo.updateById(
+                                updatedEntity,
+                                (Long) finalId
+                            );
                         } else {
-                            List<?> allExistingItems = (List<?>) currentRepo.getAll();
+                            List<?> allExistingItems = (List<
+                                ?
+                            >) currentRepo.getAll();
                             boolean duplicateExists = false;
 
                             for (Object existingItem : allExistingItems) {
-                                if (isDuplicateCompositeKey(existingItem, updatedEntity)) {
+                                if (
+                                    isDuplicateCompositeKey(
+                                        existingItem,
+                                        updatedEntity
+                                    )
+                                ) {
                                     duplicateExists = true;
                                     break;
                                 }
                             }
 
                             if (duplicateExists) {
-                                showErrorAlert("Diese Verknüpfung existiert bereits in der Datenbank! " +
-                                        "Änderung abgebrochen, um Datenverlust zu verhindern.");
+                                showErrorAlert(
+                                    "Diese Verknüpfung existiert bereits in der Datenbank! " +
+                                        "Änderung abgebrochen, um Datenverlust zu verhindern."
+                                );
                                 return;
                             }
 
@@ -312,13 +439,13 @@ public class TablePanelPageController {
                         }
 
                         loadTable(currentRepo, currentClass);
-
                     } catch (Exception e) {
-                        showErrorAlert("Fehler beim Aktualisieren: " + e.getMessage());
+                        showErrorAlert(
+                            "Fehler beim Aktualisieren: " + e.getMessage()
+                        );
                     }
                 }
             });
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -326,13 +453,22 @@ public class TablePanelPageController {
 
     @FXML
     public void handleDelete() {
-        Object selectedItem = genericTable.getSelectionModel().getSelectedItem();
+        Object selectedItem = genericTable
+            .getSelectionModel()
+            .getSelectedItem();
         if (selectedItem == null) {
-            showWarningAlert("Bitte wählen Sie die Zeile aus, die gelöscht werden soll.");
+            showWarningAlert(
+                "Bitte wählen Sie die Zeile aus, die gelöscht werden soll."
+            );
             return;
         }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Möchten Sie diesen Eintrag wirklich löschen?", ButtonType.YES, ButtonType.NO);
+        Alert alert = new Alert(
+            Alert.AlertType.CONFIRMATION,
+            "Möchten Sie diesen Eintrag wirklich löschen?",
+            ButtonType.YES,
+            ButtonType.NO
+        );
         alert.setHeaderText(null);
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {
@@ -346,12 +482,17 @@ public class TablePanelPageController {
         });
     }
 
-    private Control createInputControlForField(Field field, Object currentValue) {
+    private Control createInputControlForField(
+        Field field,
+        Object currentValue
+    ) {
         Class<?> fieldType = field.getType();
 
         if (fieldType == boolean.class || fieldType == Boolean.class) {
             ComboBox<String> booleanComboBox = new ComboBox<>();
-            booleanComboBox.setItems(FXCollections.observableArrayList("Yes", "No"));
+            booleanComboBox.setItems(
+                FXCollections.observableArrayList("Yes", "No")
+            );
             booleanComboBox.setMaxWidth(Double.MAX_VALUE);
 
             if (currentValue != null) {
@@ -364,26 +505,40 @@ public class TablePanelPageController {
             return booleanComboBox;
         }
 
-        if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) {
-            whz.pti.utils.annotations.ManyToMany anno = field.getAnnotation(whz.pti.utils.annotations.ManyToMany.class);
+        if (
+            field.isAnnotationPresent(
+                whz.pti.utils.annotations.ManyToMany.class
+            )
+        ) {
+            whz.pti.utils.annotations.ManyToMany anno = field.getAnnotation(
+                whz.pti.utils.annotations.ManyToMany.class
+            );
 
             ListView<Object> listView = new ListView<>();
-            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            listView
+                .getSelectionModel()
+                .setSelectionMode(SelectionMode.MULTIPLE);
             listView.setPrefHeight(120);
 
             try {
                 Class<?> repoClass = anno.repoClass();
 
-                GeneralRepo<?> relatedRepo = getRepoFromContextByClass(repoClass);
+                GeneralRepo<?> relatedRepo = getRepoFromContextByClass(
+                    repoClass
+                );
 
                 if (relatedRepo != null) {
                     List<Object> allAvailableItems = new ArrayList<>();
                     for (Object item : relatedRepo.getAll()) {
                         allAvailableItems.add(item);
                     }
-                    listView.setItems(FXCollections.observableArrayList(allAvailableItems));
+                    listView.setItems(
+                        FXCollections.observableArrayList(allAvailableItems)
+                    );
 
-                    if (currentValue instanceof Collection<?> currentConnections) {
+                    if (
+                        currentValue instanceof Collection<?> currentConnections
+                    ) {
                         for (Object item : allAvailableItems) {
                             if (currentConnections.contains(item)) {
                                 listView.getSelectionModel().select(item);
@@ -406,14 +561,22 @@ public class TablePanelPageController {
             GeneralRepo<?> relatedRepo = null;
 
             if (fieldType == User.class) relatedRepo = context.getUserRepo();
-            else if (fieldType == Room.class) relatedRepo = context.getRoomRepo();
-            else if (fieldType == Home.class) relatedRepo = context.getHomeRepo();
-            else if (fieldType == Scenario.class) relatedRepo = context.getScenarioRepo();
-            else if (fieldType == DeviceScenario.class) relatedRepo = context.getDeviceScenarioRepo();
-            else if (fieldType == DeviceUser.class) relatedRepo = context.getDeviceUserRepo();
-            else if (fieldType == DeviceStateLog.class) relatedRepo = context.getDeviceStateLogRepo();
-            else if (fieldType == Device.class) relatedRepo = context.getDeviceRepo();
-            else if (fieldType == DeviceType.class) relatedRepo = context.getDeviceTypeRepo();
+            else if (fieldType == Room.class) relatedRepo =
+                context.getRoomRepo();
+            else if (fieldType == Home.class) relatedRepo =
+                context.getHomeRepo();
+            else if (fieldType == Scenario.class) relatedRepo =
+                context.getScenarioRepo();
+            else if (fieldType == DeviceScenario.class) relatedRepo =
+                context.getDeviceScenarioRepo();
+            else if (fieldType == DeviceUser.class) relatedRepo =
+                context.getDeviceUserRepo();
+            else if (fieldType == DeviceStateLog.class) relatedRepo =
+                context.getDeviceStateLogRepo();
+            else if (fieldType == Device.class) relatedRepo =
+                context.getDeviceRepo();
+            else if (fieldType == DeviceType.class) relatedRepo =
+                context.getDeviceTypeRepo();
 
             if (relatedRepo != null) {
                 Iterable<?> iterableItems = relatedRepo.getAll();
@@ -421,7 +584,9 @@ public class TablePanelPageController {
                 for (Object item : iterableItems) {
                     availableItems.add(item);
                 }
-                comboBox.setItems(FXCollections.observableArrayList(availableItems));
+                comboBox.setItems(
+                    FXCollections.observableArrayList(availableItems)
+                );
 
                 if (currentValue != null) {
                     comboBox.getSelectionModel().select(currentValue);
@@ -453,16 +618,24 @@ public class TablePanelPageController {
     }
 
     @SuppressWarnings("unchecked")
-    private void fillEntityFromForm(Object entity, Map<Field, Control> fieldsMap) throws Exception {
+    private void fillEntityFromForm(
+        Object entity,
+        Map<Field, Control> fieldsMap
+    ) throws Exception {
         for (Map.Entry<Field, Control> entry : fieldsMap.entrySet()) {
             Field field = entry.getKey();
             field.setAccessible(true);
             Control control = entry.getValue();
             Class<?> fieldType = field.getType();
 
-            if ((fieldType == boolean.class || fieldType == Boolean.class) && control instanceof ComboBox) {
+            if (
+                (fieldType == boolean.class || fieldType == Boolean.class) &&
+                control instanceof ComboBox
+            ) {
                 ComboBox<String> comboBox = (ComboBox<String>) control;
-                String selectedValue = comboBox.getSelectionModel().getSelectedItem();
+                String selectedValue = comboBox
+                    .getSelectionModel()
+                    .getSelectedItem();
 
                 boolean booleanValue = "Yes".equals(selectedValue);
                 field.set(entity, booleanValue);
@@ -470,7 +643,9 @@ public class TablePanelPageController {
             }
 
             if (control instanceof ComboBox<?> comboBox) {
-                Object selectedValue = comboBox.getSelectionModel().getSelectedItem();
+                Object selectedValue = comboBox
+                    .getSelectionModel()
+                    .getSelectedItem();
 
                 if (selectedValue == null) {
                     field.set(entity, null);
@@ -478,7 +653,13 @@ public class TablePanelPageController {
                 }
 
                 if (fieldType.isEnum()) {
-                    field.set(entity, Enum.valueOf((Class<Enum>) fieldType, selectedValue.toString()));
+                    field.set(
+                        entity,
+                        Enum.valueOf(
+                            (Class<Enum>) fieldType,
+                            selectedValue.toString()
+                        )
+                    );
                 } else {
                     field.set(entity, selectedValue);
                 }
@@ -486,7 +667,9 @@ public class TablePanelPageController {
             }
 
             if (control instanceof ListView<?> listView) {
-                List<?> selectedItems = new ArrayList<>(listView.getSelectionModel().getSelectedItems());
+                List<?> selectedItems = new ArrayList<>(
+                    listView.getSelectionModel().getSelectedItems()
+                );
 
                 field.set(entity, selectedItems);
                 continue;
@@ -504,21 +687,33 @@ public class TablePanelPageController {
                     field.set(entity, Integer.parseInt(textValue));
                 } else if (fieldType == Long.class || fieldType == long.class) {
                     field.set(entity, Long.parseLong(textValue));
-                } else if (fieldType == Double.class || fieldType == double.class) {
+                } else if (
+                    fieldType == Double.class || fieldType == double.class
+                ) {
                     field.set(entity, Double.parseDouble(textValue));
-                } else if (fieldType == Boolean.class || fieldType == boolean.class) {
+                } else if (
+                    fieldType == Boolean.class || fieldType == boolean.class
+                ) {
                     field.set(entity, Boolean.parseBoolean(textValue));
                 } else if (fieldType == java.time.LocalDate.class) {
                     try {
                         field.set(entity, java.time.LocalDate.parse(textValue));
                     } catch (java.time.format.DateTimeParseException e) {
-                        throw new RuntimeException("Falsches Datumsformat für " + field.getName() + ". Bitte YYYY-MM-DD nutzen.");
+                        throw new RuntimeException(
+                            "Falsches Datumsformat für " +
+                                field.getName() +
+                                ". Bitte YYYY-MM-DD nutzen."
+                        );
                     }
                 } else if (fieldType == java.time.LocalTime.class) {
                     try {
                         field.set(entity, java.time.LocalTime.parse(textValue));
                     } catch (java.time.format.DateTimeParseException e) {
-                        throw new RuntimeException("Falsches Zeitformat für " + field.getName() + ". Bitte hh:mm nutzen.");
+                        throw new RuntimeException(
+                            "Falsches Zeitformat für " +
+                                field.getName() +
+                                ". Bitte hh:mm nutzen."
+                        );
                     }
                 } else if (fieldType == java.time.LocalDateTime.class) {
                     try {
@@ -528,9 +723,16 @@ public class TablePanelPageController {
                             normalizedValue += ":00";
                         }
 
-                        field.set(entity, java.time.LocalDateTime.parse(normalizedValue));
+                        field.set(
+                            entity,
+                            java.time.LocalDateTime.parse(normalizedValue)
+                        );
                     } catch (java.time.format.DateTimeParseException e) {
-                        throw new RuntimeException("Falsches Format für " + field.getName() + ". Bitte 'YYYY-MM-DD hh:mm' nutzen.");
+                        throw new RuntimeException(
+                            "Falsches Format für " +
+                                field.getName() +
+                                ". Bitte 'YYYY-MM-DD hh:mm' nutzen."
+                        );
                     }
                 } else {
                     field.set(entity, textValue);
@@ -539,8 +741,68 @@ public class TablePanelPageController {
         }
     }
 
+    @FXML
+    public void handleExport() {
+        if (currentRepo == null || currentClass == null) {
+            showWarningAlert("Bitte wählen Sie zuerst eine Tabelle aus.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("XML-Export speichern");
+        fileChooser.setInitialFileName(currentClass.getSimpleName() + ".xml");
+        fileChooser
+            .getExtensionFilters()
+            .add(new FileChooser.ExtensionFilter("XML-Dateien", "*.xml"));
+
+        File file = fileChooser.showSaveDialog(
+            genericTable.getScene().getWindow()
+        );
+        if (file == null) return;
+
+        try {
+            XmlExporter.export(currentRepo.getAll(), currentClass, file);
+            AlertHelper.success(
+                "Export erfolgreich",
+                "Tabelle wurde exportiert nach:\n" + file.getAbsolutePath()
+            );
+        } catch (Exception e) {
+            AlertHelper.error("Export fehlgeschlagen", e.getMessage());
+        }
+    }
+
+    @FXML
+    public void handleExportAll() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Gesamte Datenbank exportieren");
+        fileChooser.setInitialFileName("database.xml");
+        fileChooser
+            .getExtensionFilters()
+            .add(new FileChooser.ExtensionFilter("XML-Dateien", "*.xml"));
+
+        File file = fileChooser.showSaveDialog(
+            genericTable.getScene().getWindow()
+        );
+        if (file == null) return;
+
+        try {
+            XmlExporter.exportDatabase(AppContext.getInstance(), file);
+            AlertHelper.success(
+                "Export erfolgreich",
+                "Gesamte Datenbank wurde exportiert nach:\n" +
+                    file.getAbsolutePath()
+            );
+        } catch (Exception e) {
+            AlertHelper.error("Export fehlgeschlagen", e.getMessage());
+        }
+    }
+
     private void showWarningAlert(String content) {
-        Alert alert = new Alert(Alert.AlertType.WARNING, content, ButtonType.OK);
+        Alert alert = new Alert(
+            Alert.AlertType.WARNING,
+            content,
+            ButtonType.OK
+        );
         alert.setHeaderText(null);
         alert.showAndWait();
     }
@@ -554,22 +816,40 @@ public class TablePanelPageController {
     private GeneralRepo<?> getRepoFromContextByClass(Class<?> repoClass) {
         AppContext context = AppContext.getInstance();
 
-        if (repoClass.getSimpleName().equals("DeviceRepository") || repoClass.getSimpleName().contains("DeviceRepo")) {
+        if (
+            repoClass.getSimpleName().equals("DeviceRepository") ||
+            repoClass.getSimpleName().contains("DeviceRepo")
+        ) {
             return context.getDeviceRepo();
         }
-        if (repoClass.getSimpleName().equals("ScenarioRepository") || repoClass.getSimpleName().contains("ScenarioRepo")) {
+        if (
+            repoClass.getSimpleName().equals("ScenarioRepository") ||
+            repoClass.getSimpleName().contains("ScenarioRepo")
+        ) {
             return context.getScenarioRepo();
         }
-        if (repoClass.getSimpleName().equals("UserRepository") || repoClass.getSimpleName().contains("UserRepo")) {
+        if (
+            repoClass.getSimpleName().equals("UserRepository") ||
+            repoClass.getSimpleName().contains("UserRepo")
+        ) {
             return context.getUserRepo();
         }
-        if (repoClass.getSimpleName().equals("RoomRepository") || repoClass.getSimpleName().contains("RoomRepo")) {
+        if (
+            repoClass.getSimpleName().equals("RoomRepository") ||
+            repoClass.getSimpleName().contains("RoomRepo")
+        ) {
             return context.getRoomRepo();
         }
-        if (repoClass.getSimpleName().equals("HomeRepository") || repoClass.getSimpleName().contains("HomeRepo")) {
+        if (
+            repoClass.getSimpleName().equals("HomeRepository") ||
+            repoClass.getSimpleName().contains("HomeRepo")
+        ) {
             return context.getHomeRepo();
         }
-        if (repoClass.getSimpleName().equals("DeviceTypeRepository") || repoClass.getSimpleName().contains("DeviceTypeRepo")) {
+        if (
+            repoClass.getSimpleName().equals("DeviceTypeRepository") ||
+            repoClass.getSimpleName().contains("DeviceTypeRepo")
+        ) {
             return context.getDeviceTypeRepo();
         }
 
@@ -588,11 +868,17 @@ public class TablePanelPageController {
 
         for (Field field : clazz.getDeclaredFields()) {
             Class<?> type = field.getType();
-            if (!type.isPrimitive() && type != String.class &&
-                    type != java.time.LocalDate.class && type != java.time.LocalTime.class &&
-                    type != java.time.LocalDateTime.class && !type.isEnum() &&
-                    type != Integer.class && type != Long.class && type != Double.class) {
-
+            if (
+                !type.isPrimitive() &&
+                type != String.class &&
+                type != java.time.LocalDate.class &&
+                type != java.time.LocalTime.class &&
+                type != java.time.LocalDateTime.class &&
+                !type.isEnum() &&
+                type != Integer.class &&
+                type != Long.class &&
+                type != Double.class
+            ) {
                 keyFields.add(field);
             }
         }
@@ -600,7 +886,8 @@ public class TablePanelPageController {
         return keyFields;
     }
 
-    private boolean isDuplicateCompositeKey(Object dbEntity, Object newEntity) throws Exception {
+    private boolean isDuplicateCompositeKey(Object dbEntity, Object newEntity)
+        throws Exception {
         for (Field field : currentClass.getDeclaredFields()) {
             field.setAccessible(true);
             Object dbValue = field.get(dbEntity);
@@ -610,14 +897,21 @@ public class TablePanelPageController {
                 continue;
             }
 
-            if ((dbValue == null && newValue != null) || (dbValue != null && newValue == null)) {
+            if (
+                (dbValue == null && newValue != null) ||
+                (dbValue != null && newValue == null)
+            ) {
                 return false;
             }
 
-            if (!field.getType().isPrimitive() && field.getType() != String.class &&
-                    !field.getType().getName().startsWith("java.time") &&
-                    field.getType() != Integer.class && field.getType() != Long.class && field.getType() != Double.class) {
-
+            if (
+                !field.getType().isPrimitive() &&
+                field.getType() != String.class &&
+                !field.getType().getName().startsWith("java.time") &&
+                field.getType() != Integer.class &&
+                field.getType() != Long.class &&
+                field.getType() != Double.class
+            ) {
                 try {
                     Field idField = dbValue.getClass().getDeclaredField("id");
                     idField.setAccessible(true);
