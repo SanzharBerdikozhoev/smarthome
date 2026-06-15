@@ -9,63 +9,77 @@
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="whz.pti.controllers.LoginPageController"
-            prefHeight="400.0" prefWidth="600.0"
-            styleClass="login-container"
+            prefHeight="700.0" prefWidth="1024.0"
+            styleClass="root"
 >
     <stylesheets>
         <URL value="@../styles/LoginPage.css"/>
     </stylesheets>
 
-    <Label styleClass="login-logo"
-           maxWidth="Infinity"
-           text="Smarthome"
-           AnchorPane.leftAnchor="0.0"
-           AnchorPane.rightAnchor="0.0"
-           AnchorPane.topAnchor="20.0"/>
+    <StackPane AnchorPane.topAnchor="0.0"
+               AnchorPane.bottomAnchor="0.0"
+               AnchorPane.leftAnchor="0.0"
+               AnchorPane.rightAnchor="0.0">
+        <children>
+            <VBox alignment="CENTER" spacing="0" maxWidth="420.0">
+                <children>
+                    <Label styleClass="login-logo"
+                           maxWidth="Infinity"
+                           text="Smarthome"/>
 
-    <VBox styleClass="login-form"
-          AnchorPane.leftAnchor="200.0"
-          AnchorPane.rightAnchor="200.0"
-          AnchorPane.bottomAnchor="100.0"
-          AnchorPane.topAnchor="100.0"
-          spacing="4"
-    >
-        <Label styleClass="login-header"
-               maxWidth="Infinity"
-               text="Anmelden"/>
+                    <Label styleClass="login-subtitle"
+                           maxWidth="Infinity"
+                           text="Steuere dein Zuhause an einem Ort"/>
 
-        <Region prefHeight="40.0"/>
+                    <Region prefHeight="30.0"/>
 
-        <Label styleClass="fs-20"
-               text="Benutzername"/>
-        <TextField styleClass="login-input"
-                fx:id="usernameField"
-                   promptText="Benutzername"/>
+                    <VBox styleClass="login-form" spacing="6">
+                        <children>
+                            <Label styleClass="login-header"
+                                   maxWidth="Infinity"
+                                   text="Anmelden"/>
 
-        <Region prefHeight="15.0"/>
-        <Label styleClass="fs-20"
-               text="Passwort"/>
-        <PasswordField styleClass="login-input"
-                fx:id="passwordField"
-                   promptText="Passwort"
-        />
+                            <Region prefHeight="30.0"/>
 
-        <Region prefHeight="25.0"/>
+                            <Label styleClass="fs-20"
+                                   text="BENUTZERNAME"/>
+                            <TextField styleClass="login-input"
+                                       fx:id="usernameField"
+                                       promptText="z. B. admin"/>
 
-        <StackPane
-                AnchorPane.leftAnchor="0.0"
-                AnchorPane.rightAnchor="0.0">
-            <children>
-                <Button fx:id="loginButton"
-                        styleClass="login-button"
-                        text="Login"
-                        prefWidth="300.0"
-                        maxWidth="300.0" />
-            </children>
-        </StackPane>
+                            <Region prefHeight="16.0"/>
+                            <Label styleClass="fs-20"
+                                   text="PASSWORT"/>
+                            <PasswordField styleClass="login-input"
+                                           fx:id="passwordField"
+                                           promptText="••••••••"
+                            />
 
-        <Region prefHeight="20.0"/>
-        <Label styleClass="login-error"
-                fx:id="errorMessage"/>
-    </VBox>
+                            <Region prefHeight="28.0"/>
+
+                            <StackPane>
+                                <children>
+                                    <Button fx:id="loginButton"
+                                            styleClass="login-button"
+                                            text="Anmelden"
+                                            maxWidth="Infinity" />
+                                </children>
+                            </StackPane>
+
+                            <Region prefHeight="16.0"/>
+                            <Label styleClass="login-error"
+                                   maxWidth="Infinity"
+                                   fx:id="errorMessage"/>
+                        </children>
+                    </VBox>
+
+                    <Region prefHeight="24.0"/>
+
+                    <Label styleClass="login-footer"
+                           maxWidth="Infinity"
+                           text="WH-Zwickau · Datenbanksysteme · Smarthome-Projekt"/>
+                </children>
+            </VBox>
+        </children>
+    </StackPane>
 </AnchorPane>

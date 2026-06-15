@@ -12,11 +12,11 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.geometry.Insets?>
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-            prefHeight="600.0" prefWidth="900.0"
+            prefHeight="700.0" prefWidth="1024.0"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="whz.pti.controllers.TablePanelPageController"
-            styleClass="panel-container">
+            styleClass="root">
 
     <stylesheets>
         <URL value="@../styles/TablePanelPage.css"/>
@@ -27,16 +27,19 @@
     </top>
 
     <left>
-        <VBox prefWidth="220.0"
+        <VBox prefWidth="240.0"
               spacing="10.0"
               styleClass="panel-sidebar">
             <Label
                     styleClass="panel-title"
-                    text="Datenbank" textFill="WHITE"/>
-            <Region prefHeight="10"/>
+                    text="Datenbank"/>
+            <Label
+                    styleClass="panel-subtitle"
+                    text="TABELLEN"/>
+            <Region prefHeight="6"/>
             <ListView fx:id="tablesListView"
-                      prefHeight="480.0"
-                      prefWidth="190.0"/>
+                      VBox.vgrow="ALWAYS"
+                      prefWidth="200.0"/>
         </VBox>
     </left>
 
@@ -55,41 +58,41 @@
                        text="Wählen Sie eine Tabelle aus der Liste aus"/>
             </HBox>
 
-            <TableView fx:id="genericTable"
-                       prefHeight="430.0"
-                       prefWidth="640.0"
-                       VBox.vgrow="ALWAYS">
-                <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                </columnResizePolicy>
-            </TableView>
+            <VBox styleClass="content-card" VBox.vgrow="ALWAYS" spacing="15.0">
+                <TableView fx:id="genericTable"
+                           VBox.vgrow="ALWAYS">
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                    </columnResizePolicy>
+                </TableView>
 
-            <HBox fx:id="actionButtonsContainer"
-                  alignment="CENTER_RIGHT"
-                  prefHeight="50.0"
-                  spacing="12.0">
-                <Button fx:id="buttonAdd"
-                        mnemonicParsing="false"
-                        onAction="#handleAdd"
-                        prefHeight="35.0"
-                        prefWidth="110.0"
-                        styleClass="action-button"
-                        text="Hinzufügen"/>
-                <Button fx:id="buttonEdit"
-                        mnemonicParsing="false"
-                        onAction="#handleEdit"
-                        prefHeight="35.0"
-                        prefWidth="110.0"
-                        styleClass="action-button"
-                        text="Ändern"/>
-                <Button fx:id="buttonDelete"
-                        mnemonicParsing="false"
-                        onAction="#handleDelete"
-                        prefHeight="35.0"
-                        prefWidth="110.0"
-                        styleClass="action-button"
-                        text="Löschen"/>
-            </HBox>
+                <HBox fx:id="actionButtonsContainer"
+                      alignment="CENTER_RIGHT"
+                      prefHeight="50.0"
+                      spacing="12.0">
+                    <Button fx:id="buttonAdd"
+                            mnemonicParsing="false"
+                            onAction="#handleAdd"
+                            prefHeight="38.0"
+                            prefWidth="120.0"
+                            styleClass="action-button"
+                            text="Hinzufügen"/>
+                    <Button fx:id="buttonEdit"
+                            mnemonicParsing="false"
+                            onAction="#handleEdit"
+                            prefHeight="38.0"
+                            prefWidth="120.0"
+                            styleClass="action-button"
+                            text="Ändern"/>
+                    <Button fx:id="buttonDelete"
+                            mnemonicParsing="false"
+                            onAction="#handleDelete"
+                            prefHeight="38.0"
+                            prefWidth="120.0"
+                            styleClass="action-button"
+                            text="Löschen"/>
+                </HBox>
+            </VBox>
         </VBox>
     </center>
 </BorderPane>

@@ -2,10 +2,14 @@ package whz.pti.controllers;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.layout.HBox;
@@ -17,6 +21,8 @@ import whz.pti.utils.AppContext;
 import whz.pti.utils.UserSession;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +32,7 @@ public class HomePageController {
     private final RoomService roomService = AppContext.getInstance().getRoomService();
     private final DeviceService deviceService = AppContext.getInstance().getDeviceService();
     private final DeviceTypeService deviceTypeService = AppContext.getInstance().getDeviceTypeService();
+    private final DeviceScenarioService deviceScenarioService = AppContext.getInstance().getDeviceScenarioService();
     private final DeviceStateLogService deviceStateLogService = AppContext.getInstance().getDeviceStateLogService();
     private  final AuthService authService = AppContext.getInstance().getAuthService();
 
@@ -33,7 +40,11 @@ public class HomePageController {
     @FXML private Button logoutButton;
     @FXML private ComboBox<Home> houseComboBox;
     @FXML private ListView<Room> roomListView;
-    @FXML private Button settingsButton;
+
+    @FXML private Button addHomeButton;
+    @FXML private Button addRoomButton;
+    @FXML private Button addDeviceButton;
+    @FXML private Button addScenarioButton;
 
     @FXML private HBox scenariosContainer;
     @FXML private Label currentRoomLabel;
@@ -95,8 +106,27 @@ public class HomePageController {
                     }
                 });
 
+        houseComboBox.setOnContextMenuRequested(event -> {
+            Home selectedHome = houseComboBox.getSelectionModel().getSelectedItem();
+
+            if (selectedHome != null) {
+                ContextMenu menu = new ContextMenu();
+
+                MenuItem deleteItem = new MenuItem("Haus löschen");
+                deleteItem.setOnAction(e -> deleteSelectedHome());
+
+                menu.getItems().add(deleteItem);
+                menu.show(houseComboBox, event.getScreenX(), event.getScreenY());
+            }
+        });
+
         loadUserHomes();
         loadAndRenderScenarios();
+
+        addHomeButton.setOnAction(e -> openAddHomeDialog());
+        addRoomButton.setOnAction(e -> openAddRoomDialog());
+        addDeviceButton.setOnAction(e -> openAddDeviceDialog());
+        addScenarioButton.setOnAction(e -> openAddScenarioDialog());
     }
 
     private String getDeviceName(Long deviceID) {
@@ -135,13 +165,23 @@ public class HomePageController {
             for (Scenario scenario : scenarios) {
                 String displayName = scenario.getName() != null ? scenario.getName() : "Szenario #" + scenario.getId();
 
+                HBox scenarioBox = new HBox(5);
+
                 Button scenarioButton = new Button("▶ " + displayName);
+                scenarioButton.getStyleClass().add("scenario-button");
 
                 setButtonStyle(scenarioButton, scenario.getIsActive());
 
                 scenarioButton.setOnAction(event -> handleScenarioClick(scenario, scenarioButton));
 
-                scenariosContainer.getChildren().add(scenarioButton);
+                Button deleteButton = new Button("✕");
+                deleteButton.getStyleClass().add("delete-button-small");
+
+                deleteButton.setOnAction(event -> deleteScenario(scenario));
+
+                scenarioBox.getChildren().addAll(scenarioButton, deleteButton);
+
+                scenariosContainer.getChildren().add(scenarioBox);
             }
 
         } catch (Exception e) {
@@ -162,20 +202,23 @@ public class HomePageController {
         houseComboBox.getItems().clear();
         houseComboBox.getItems().addAll(homes);
 
+        if (homes.isEmpty()) {
+            roomListView.getItems().clear();
+            devicesTilePane.getChildren().clear();
+            currentRoomLabel.setText("Geräte im Raum: (Kein Haus vorhanden)");
+            return;
+        }
+
         houseComboBox.setOnAction(event -> {
-            Home selectedHome =
-                    houseComboBox.getSelectionModel().getSelectedItem();
+            Home selectedHome = houseComboBox.getSelectionModel().getSelectedItem();
 
             if (selectedHome != null) {
                 loadRooms(selectedHome.getId());
             }
         });
 
-        if (!homes.isEmpty()) {
-            houseComboBox.getSelectionModel().selectFirst();
-
-            loadRooms(homes.get(0).getId());
-        }
+        houseComboBox.getSelectionModel().selectFirst();
+        loadRooms(homes.get(0).getId());
     }
 
     private void loadRooms(Long houseId) {
@@ -222,34 +265,23 @@ public class HomePageController {
 
     private VBox createDeviceCard(Device device) {
 
-        VBox card = new VBox(10);
+        VBox card = new VBox(8);
+        card.getStyleClass().add("device-card");
 
         card.setPrefWidth(200);
         card.setPrefHeight(140);
 
-        card.setStyle("""
-        -fx-background-color: white;
-        -fx-background-radius: 10;
-        -fx-padding: 15;
-        -fx-border-color: #dfe6e9;
-        -fx-border-radius: 10;
-        -fx-effect: dropshadow(
-            three-pass-box,
-            rgba(0,0,0,0.1),
-            5,
-            0,
-            0,
-            2
-        );
-        """);
+        Label nameLabel = new Label(device.getName());
+        nameLabel.getStyleClass().add("device-name");
 
-        Label nameLabel =
-                new Label(device.getName());
-
-        nameLabel.setStyle(
-                "-fx-font-size: 16;" +
-                        "-fx-font-weight: bold;"
-        );
+        Label typeLabel = new Label();
+        DeviceType deviceType = deviceTypeService.getDeviceTypeByDeviceId(device.getId());
+        if (deviceType != null) {
+            typeLabel.setText(deviceType.getName());
+        } else {
+            typeLabel.setText("Unknown Type");
+        }
+        typeLabel.getStyleClass().add("device-type");
 
         Label statusLabel =
                 new Label(
@@ -258,10 +290,8 @@ public class HomePageController {
                                 : "🔴 Inaktiv"
                 );
 
-        statusLabel.setStyle(
-                device.isActive()
-                        ? "-fx-text-fill: green;"
-                        : "-fx-text-fill: red;"
+        statusLabel.getStyleClass().add(
+                device.isActive() ? "device-status-on" : "device-status-off"
         );
 
         Button toggleButton =
@@ -271,19 +301,9 @@ public class HomePageController {
                                 : "Einschalten"
                 );
 
-        Label typeLabel = new Label();
-        DeviceType deviceType = deviceTypeService.getDeviceTypeByDeviceId(device.getId());
-        if (deviceType != null) {
-            typeLabel.setText(deviceType.getName());
-        } else {
-            typeLabel.setText("Unknown Type");
-        }
-
-        typeLabel.setStyle("""
-        -fx-font-size: 11;
-        -fx-text-fill: #7f8c8d;
-        -fx-font-style: italic;
-        """);
+        toggleButton.getStyleClass().add(
+                device.isActive() ? "device-toggle-on" : "device-toggle-off"
+        );
 
         toggleButton.setOnAction(event -> {
             boolean nextState = !device.isActive();
@@ -298,11 +318,17 @@ public class HomePageController {
             loadLogs(currentRoomId);
         });
 
+        Button deleteButton = new Button("Löschen");
+        deleteButton.getStyleClass().add("delete-button");
+
+        deleteButton.setOnAction(event -> deleteDevice(device));
+
         card.getChildren().addAll(
                 nameLabel,
                 typeLabel,
                 statusLabel,
-                toggleButton
+                toggleButton,
+                deleteButton
         );
 
         return card;
@@ -349,10 +375,475 @@ public class HomePageController {
 
 
     private void setButtonStyle(Button button, boolean isActive) {
+        button.getStyleClass().removeAll("scenario-green", "scenario-blue");
         if (isActive) {
-            button.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+            button.getStyleClass().add("scenario-green");
         } else {
-            button.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+            button.getStyleClass().add("scenario-blue");
+        }
+    }
+
+    // ======================================================================
+    //  ADD DIALOGS
+    // ======================================================================
+
+    /**
+     * Erstellt ein leeres Dialog mit Standard-Styling und Titel.
+     */
+    private Dialog<ButtonType> createBaseDialog(String title, String headerText) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(title);
+        dialog.setHeaderText(headerText);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // CSS der HomePage übernehmen, damit Stylesheets im Dialog greifen
+        if (devicesTilePane.getScene() != null) {
+            dialog.getDialogPane().getStylesheets().addAll(
+                    devicesTilePane.getScene().getStylesheets()
+            );
+        }
+
+        return dialog;
+    }
+
+    private Label formLabel(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("form-label");
+        return label;
+    }
+
+    private void styleInput(Control control) {
+        control.getStyleClass().add("form-input");
+    }
+
+    /**
+     * Dialog: Neues Haus hinzufügen
+     */
+    private void openAddHomeDialog() {
+        Dialog<ButtonType> dialog = createBaseDialog("Neues Haus", "Haus hinzufügen");
+
+        TextField addressField = new TextField();
+        addressField.setPromptText("Straße, Hausnummer");
+        styleInput(addressField);
+
+        TextField townField = new TextField();
+        townField.setPromptText("Stadt");
+        styleInput(townField);
+
+        TextField zipField = new TextField();
+        zipField.setPromptText("Postleitzahl");
+        styleInput(zipField);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 20, 10, 20));
+
+        grid.add(formLabel("Adresse"), 0, 0);
+        grid.add(addressField, 1, 0);
+        grid.add(formLabel("Stadt"), 0, 1);
+        grid.add(townField, 1, 1);
+        grid.add(formLabel("PLZ"), 0, 2);
+        grid.add(zipField, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            String address = addressField.getText().trim();
+            String town = townField.getText().trim();
+            String zip = zipField.getText().trim();
+
+            if (address.isEmpty() || town.isEmpty() || zip.isEmpty()) {
+                showError("Bitte alle Felder ausfüllen.");
+                return;
+            }
+
+            Long userId = UserSession.getCurrentUserId();
+            User currentUser = authService.getUser(userId).orElse(null);
+
+            Home newHome = new Home(null, address, town, zip, currentUser);
+            homeService.save(newHome);
+
+            loadUserHomes();
+        }
+    }
+
+    /**
+     * Dialog: Neuen Raum hinzufügen
+     */
+    private void openAddRoomDialog() {
+        Home selectedHome = houseComboBox.getSelectionModel().getSelectedItem();
+
+        if (selectedHome == null) {
+            showError("Bitte zuerst ein Haus auswählen.");
+            return;
+        }
+
+        Dialog<ButtonType> dialog = createBaseDialog("Neuer Raum", "Raum zu \"" + selectedHome + "\" hinzufügen");
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("z. B. Wohnzimmer");
+        styleInput(nameField);
+
+        TextField floorField = new TextField();
+        floorField.setPromptText("z. B. Erdgeschoss");
+        styleInput(floorField);
+
+        TextField squareField = new TextField();
+        squareField.setPromptText("z. B. 25.5");
+        styleInput(squareField);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 20, 10, 20));
+
+        grid.add(formLabel("Name"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(formLabel("Etage"), 0, 1);
+        grid.add(floorField, 1, 1);
+        grid.add(formLabel("Fläche (m²)"), 0, 2);
+        grid.add(squareField, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            String name = nameField.getText().trim();
+            String floor = floorField.getText().trim();
+            String squareText = squareField.getText().trim();
+
+            if (name.isEmpty() || floor.isEmpty() || squareText.isEmpty()) {
+                showError("Bitte alle Felder ausfüllen.");
+                return;
+            }
+
+            double square;
+            try {
+                square = Double.parseDouble(squareText.replace(",", "."));
+            } catch (NumberFormatException ex) {
+                showError("Fläche muss eine Zahl sein.");
+                return;
+            }
+
+            if (square <= 0) {
+                showError("Fläche muss größer als 0 sein.");
+                return;
+            }
+
+            Room newRoom = new Room(null, name, floor, square, selectedHome);
+            roomService.save(newRoom);
+
+            loadRooms(selectedHome.getId());
+        }
+    }
+
+    /**
+     * Dialog: Neues Gerät hinzufügen
+     */
+    private void openAddDeviceDialog() {
+        Room selectedRoom = roomListView.getSelectionModel().getSelectedItem();
+
+        if (selectedRoom == null) {
+            showError("Bitte zuerst einen Raum auswählen.");
+            return;
+        }
+
+        Dialog<ButtonType> dialog = createBaseDialog("Neues Gerät", "Gerät zu \"" + selectedRoom.getName() + "\" hinzufügen");
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("z. B. Philips Hue Lampe");
+        styleInput(nameField);
+
+        ComboBox<DeviceType> deviceTypeComboBox = new ComboBox<>();
+        deviceTypeComboBox.getItems().addAll(deviceTypeService.getDeviceTypes());
+        deviceTypeComboBox.setPromptText("Gerätetyp wählen...");
+        styleInput(deviceTypeComboBox);
+
+        CheckBox activeCheckBox = new CheckBox("Aktiv");
+        activeCheckBox.setSelected(true);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 20, 10, 20));
+
+        grid.add(formLabel("Name"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(formLabel("Typ"), 0, 1);
+        grid.add(deviceTypeComboBox, 1, 1);
+        grid.add(formLabel("Status"), 0, 2);
+        grid.add(activeCheckBox, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            String name = nameField.getText().trim();
+            DeviceType deviceType = deviceTypeComboBox.getSelectionModel().getSelectedItem();
+
+            if (name.isEmpty() || deviceType == null) {
+                showError("Bitte Name und Gerätetyp angeben.");
+                return;
+            }
+
+            Device newDevice = new Device(
+                    null,
+                    name,
+                    selectedRoom,
+                    deviceType,
+                    LocalDate.now(),
+                    activeCheckBox.isSelected(),
+                    null,
+                    null
+            );
+
+            deviceService.save(newDevice);
+
+            loadDevices(selectedRoom.getId());
+        }
+    }
+
+    /**
+     * Dialog: Neues Szenario hinzufügen
+     */
+    private void openAddScenarioDialog() {
+        Home selectedHome = houseComboBox.getSelectionModel().getSelectedItem();
+
+        if (selectedHome == null) {
+            showError("Bitte zuerst ein Haus auswählen.");
+            return;
+        }
+
+        Dialog<ButtonType> dialog = createBaseDialog("Neues Szenario", "Szenario hinzufügen");
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("z. B. Morgenroutine");
+        styleInput(nameField);
+
+        TextField descriptionField = new TextField();
+        descriptionField.setPromptText("Kurze Beschreibung");
+        styleInput(descriptionField);
+
+        TextField startTimeField = new TextField();
+        startTimeField.setPromptText("HH:mm");
+        styleInput(startTimeField);
+
+        TextField endTimeField = new TextField();
+        endTimeField.setPromptText("HH:mm");
+        styleInput(endTimeField);
+
+        CheckBox activeCheckBox = new CheckBox("Aktiv");
+        activeCheckBox.setSelected(true);
+
+        ListView<Device> deviceListView = new ListView<>();
+        deviceListView.setPrefHeight(140);
+        deviceListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        for (Room room : roomService.getRoomsByHouseId(selectedHome.getId())) {
+            deviceListView.getItems().addAll(deviceService.getDevicesByRoomId(room.getId()));
+        }
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        grid.add(formLabel("Name"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(formLabel("Beschreibung"), 0, 1);
+        grid.add(descriptionField, 1, 1);
+        grid.add(formLabel("Startzeit"), 0, 2);
+        grid.add(startTimeField, 1, 2);
+        grid.add(formLabel("Endzeit"), 0, 3);
+        grid.add(endTimeField, 1, 3);
+        grid.add(formLabel("Status"), 0, 4);
+        grid.add(activeCheckBox, 1, 4);
+        grid.add(formLabel("Geräte"), 0, 5);
+        grid.add(deviceListView, 1, 5);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            String name = nameField.getText().trim();
+            String description = descriptionField.getText().trim();
+            String startText = startTimeField.getText().trim();
+            String endText = endTimeField.getText().trim();
+
+            List<Device> selectedDevices =
+                    new java.util.ArrayList<>(deviceListView.getSelectionModel().getSelectedItems());
+
+            if (name.isEmpty() || startText.isEmpty() || endText.isEmpty()) {
+                showError("Bitte Name, Startzeit und Endzeit angeben.");
+                return;
+            }
+
+            if (selectedDevices.isEmpty()) {
+                showError("Bitte mindestens ein Gerät auswählen.");
+                return;
+            }
+
+            LocalTime startTime;
+            LocalTime endTime;
+
+            try {
+                startTime = LocalTime.parse(startText);
+                endTime = LocalTime.parse(endText);
+            } catch (Exception ex) {
+                showError("Zeit muss im Format HH:mm angegeben werden.");
+                return;
+            }
+
+            Scenario newScenario = new Scenario(
+                    null,
+                    name,
+                    activeCheckBox.isSelected(),
+                    startTime,
+                    endTime,
+                    null
+            );
+
+            newScenario.setDescription(description.isEmpty() ? null : description);
+
+            scenarioService.save(newScenario);
+
+            Scenario savedScenario = scenarioService.getScenarios()
+                    .stream()
+                    .filter(s -> name.equals(s.getName()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (savedScenario == null || savedScenario.getId() == null) {
+                showError("Szenario konnte nicht gespeichert werden.");
+                return;
+            }
+
+            for (Device device : selectedDevices) {
+                DeviceScenario link = new DeviceScenario(
+                        null,
+                        device,
+                        savedScenario,
+                        "OUTPUT"
+                );
+
+                deviceScenarioService.save(link);
+            }
+
+            loadAndRenderScenarios();
+        }
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Fehler");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void deleteSelectedHome() {
+        Home selectedHome = houseComboBox.getSelectionModel().getSelectedItem();
+
+        if (selectedHome == null) {
+            showError("Bitte zuerst ein Haus auswählen.");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Haus löschen");
+        confirm.setHeaderText("Haus wirklich löschen?");
+        confirm.setContentText(
+                "Das Haus \"" + selectedHome + "\" wird gelöscht.\n" +
+                        "Alle Räume und Geräte in diesem Haus werden ebenfalls gelöscht."
+        );
+
+        Optional<ButtonType> result = confirm.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                homeService.delete(selectedHome);
+
+                roomListView.getItems().clear();
+                devicesTilePane.getChildren().clear();
+                logTableView.getItems().clear();
+
+                loadUserHomes();
+                loadAndRenderScenarios();
+
+            } catch (Exception ex) {
+                showError("Haus konnte nicht gelöscht werden.");
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private void deleteDevice(Device device) {
+        if (device == null) {
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Gerät löschen");
+        confirm.setHeaderText("Gerät wirklich löschen?");
+        confirm.setContentText("Das Gerät \"" + device.getName() + "\" wird gelöscht.");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                deviceService.delete(device);
+
+                Room selectedRoom = roomListView.getSelectionModel().getSelectedItem();
+
+                if (selectedRoom != null) {
+                    loadDevices(selectedRoom.getId());
+                    loadLogs(selectedRoom.getId());
+                }
+
+                loadAndRenderScenarios();
+
+            } catch (Exception ex) {
+                showError("Gerät konnte nicht gelöscht werden.");
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private void deleteScenario(Scenario scenario) {
+        if (scenario == null) {
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Szenario löschen");
+        confirm.setHeaderText("Szenario wirklich löschen?");
+        confirm.setContentText("Das Szenario \"" + scenario.getName() + "\" wird gelöscht.");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                scenarioService.delete(scenario);
+
+                loadAndRenderScenarios();
+
+                Room selectedRoom = roomListView.getSelectionModel().getSelectedItem();
+
+                if (selectedRoom != null) {
+                    loadDevices(selectedRoom.getId());
+                    loadLogs(selectedRoom.getId());
+                }
+
+            } catch (Exception ex) {
+                showError("Szenario konnte nicht gelöscht werden.");
+                ex.printStackTrace();
+            }
         }
     }
 }

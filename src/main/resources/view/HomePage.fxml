@@ -16,9 +16,10 @@
 
 <?import java.net.URL?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
-<BorderPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: #f4f4f9;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="whz.pti.controllers.HomePageController">
+<BorderPane prefHeight="768.0" prefWidth="1024.0" styleClass="root" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="whz.pti.controllers.HomePageController">
     <stylesheets>
         <URL value="@../styles/HomePage.css"/>
     </stylesheets>
@@ -28,27 +29,38 @@
     </top>
 
     <left>
-        <VBox prefWidth="250.0" spacing="15.0" style="-fx-background-color: #2c3e50;" BorderPane.alignment="CENTER">
+        <VBox prefWidth="250.0" spacing="15.0" styleClass="sidebar" BorderPane.alignment="CENTER">
             <children>
-                <Label text="Hausauswahl" textFill="#bdc3c7">
-                    <font>
-                        <Font size="12.0" />
-                    </font>
-                </Label>
-                <ComboBox fx:id="houseComboBox" prefWidth="220.0" promptText="Haus wählen..." style="-fx-background-color: #34495e; -fx-text-fill: white;" />
+                <Label text="Smarthome" styleClass="sidebar-title" />
 
-                <VBox prefHeight="2.0" style="-fx-background-color: #34495e;" />
-
-                <Label text="Räume" textFill="#bdc3c7">
-                    <font>
-                        <Font size="12.0" />
-                    </font>
-                </Label>
-                <ListView fx:id="roomListView" prefHeight="400.0" prefWidth="220.0" style="-fx-background-color: #34495e; -fx-background-radius: 5;" />
-
-                <VBox alignment="BOTTOM_CENTER" VBox.vgrow="ALWAYS">
+                <VBox spacing="6.0">
                     <children>
-                        <Button fx:id="settingsButton" mnemonicParsing="false" prefWidth="220.0" style="-fx-background-color: #16a085; -fx-text-fill: white;" text="Einstellungen ⚙" />
+                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                            <children>
+                                <Label text="HAUSAUSWAHL" styleClass="sidebar-label" HBox.hgrow="ALWAYS" />
+                                <Button fx:id="addHomeButton" text="+ Haus" styleClass="add-button" mnemonicParsing="false" />
+                            </children>
+                        </HBox>
+                        <ComboBox fx:id="houseComboBox" prefWidth="220.0" promptText="Haus wählen..." />
+                    </children>
+                </VBox>
+
+                <Region prefHeight="1.0" styleClass="sidebar-divider" />
+
+                <VBox spacing="6.0" VBox.vgrow="ALWAYS">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                            <children>
+                                <Label text="RÄUME" styleClass="sidebar-label" HBox.hgrow="ALWAYS" />
+                                <Button fx:id="addRoomButton" text="+ Raum" styleClass="add-button" mnemonicParsing="false" />
+                            </children>
+                        </HBox>
+                        <ListView fx:id="roomListView" prefHeight="380.0" prefWidth="220.0" VBox.vgrow="ALWAYS" />
+                    </children>
+                </VBox>
+
+                <VBox alignment="BOTTOM_CENTER">
+                    <children>
                     </children>
                 </VBox>
             </children>
@@ -65,7 +77,7 @@
             </padding>
             <children>
 
-                <VBox spacing="10.0" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);">
+                <VBox spacing="12.0" styleClass="hero-card">
                     <StackPane prefHeight="220" styleClass="glass-card">
                         <children>
                             <ImageView fitHeight="220.0" pickOnBounds="true" preserveRatio="false">
@@ -82,28 +94,27 @@
                         </children>
                     </StackPane>
                     <children>
-                        <Label text="Schnellszenarien">
-                            <font>
-                                <Font name="System Bold" size="16.0" />
-                            </font>
-                        </Label>
+                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                            <children>
+                                <Label text="Schnellszenarien" styleClass="section-title" HBox.hgrow="ALWAYS" />
+                                <Button fx:id="addScenarioButton" text="+ Szenario hinzufügen" styleClass="add-button-light" mnemonicParsing="false" />
+                            </children>
+                        </HBox>
                         <HBox fx:id="scenariosContainer" spacing="10.0">
                             <children>
-                                <Button mnemonicParsing="false" style="-fx-background-color: #3498db; -fx-text-fill: white;" text="▶ Kino" />
-                                <Button mnemonicParsing="false" style="-fx-background-color: #3498db; -fx-text-fill: white;" text="▶ Haus verlassen" />
-                                <Button mnemonicParsing="false" style="-fx-background-color: #3498db; -fx-text-fill: white;" text="▶ Alles ausschalten" />
                             </children>
                         </HBox>
                     </children>
                 </VBox>
 
-                <VBox spacing="10.0" VBox.vgrow="ALWAYS">
+                <VBox spacing="10.0" styleClass="content-card" VBox.vgrow="ALWAYS">
                     <children>
-                        <Label fx:id="currentRoomLabel" text="Geräte im Raum: (Wählen Sie einen Raum)">
-                            <font>
-                                <Font name="System Bold" size="16.0" />
-                            </font>
-                        </Label>
+                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                            <children>
+                                <Label fx:id="currentRoomLabel" text="Geräte im Raum: (Wählen Sie einen Raum)" styleClass="section-title" HBox.hgrow="ALWAYS" />
+                                <Button fx:id="addDeviceButton" text="+ Gerät hinzufügen" styleClass="add-button-light" mnemonicParsing="false" />
+                            </children>
+                        </HBox>
                         <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background-insets: 0;" VBox.vgrow="ALWAYS">
                             <content>
                                 <TilePane fx:id="devicesTilePane" hgap="15.0" prefColumns="3" vgap="15.0" style="-fx-background-color: transparent;">
@@ -113,9 +124,9 @@
                     </children>
                 </VBox>
 
-                <VBox prefHeight="180.0" spacing="10.0" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);">
+                <VBox prefHeight="180.0" spacing="10.0" styleClass="content-card">
                     <children>
-                        <Label text="Aktivitätsprotokoll (Letzte Ereignisse)">
+                        <Label text="Aktivitätsprotokoll (Letzte Ereignisse)" styleClass="section-title">
                             <font>
                                 <Font name="System Bold" size="14.0" />
                             </font>

@@ -7,15 +7,19 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import whz.pti.models.*;
+import whz.pti.services.ScenarioService;
 import whz.pti.utils.AppContext;
 import whz.pti.repositories.GeneralRepo;
 import whz.pti.utils.UserSession;
 import whz.pti.utils.annotations.ForeignKey;
 
 import java.lang.reflect.Field;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static whz.pti.utils.AppContext.*;
 
 public class TablePanelPageController {
     @FXML private ListView<String> tablesListView;
@@ -29,28 +33,58 @@ public class TablePanelPageController {
     private final ObservableList<String> tables = FXCollections.observableArrayList();
     private GeneralRepo<Object> currentRepo;
     private Class<?> currentClass;
+    private final ScenarioService scenarioService = getInstance().getScenarioService();
+
 
     @FXML
     public void initialize() {
         applyPermissions();
 
+
+        ObservableList<String> tables = FXCollections.observableArrayList();
+
         if (UserSession.isAdmin()) {
-            tables.add("Users");
+
+            tables.addAll(
+                    "Users",
+                    "Room",
+                    "Home",
+                    "Scenario",
+                    "Device",
+                    "DeviceScenario",
+                    "DeviceStateLog",
+                    "DeviceType",
+                    "DeviceUser"
+            );
+
+        } else {
+
+            tables.addAll(
+                    "Home",
+                    "Room",
+                    "Device",
+                    "Scenario"
+            );
         }
 
-        tables.addAll("Room", "Home", "Scenario", "Device", "DeviceScenario", "DeviceStateLog", "DeviceType", "DeviceUser");
         tablesListView.setItems(tables);
 
         tablesListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 labelCurrentTableName.setText("Tabelle: " + newVal);
-                AppContext context = AppContext.getInstance();
+                AppContext context = getInstance();
 
                 switch (newVal) {
                     case "Users" -> loadTable(context.getUserRepo(), User.class);
                     case "Room" -> loadTable(context.getRoomRepo(), Room.class);
                     case "Home" -> loadTable(context.getHomeRepo(), Home.class);
-                    case "Scenario" -> loadTable(context.getScenarioRepo(), Scenario.class);
+                    case "Scenario" -> {
+                        if (UserSession.isAdmin()) {
+                            loadTable(context.getScenarioRepo(), Scenario.class);
+                        } else {
+                            loadUserScenarios();
+                        }
+                    }
                     case "Device" -> loadTable(context.getDeviceRepo(), Device.class);
                     case "DeviceScenario" -> loadTable(context.getDeviceScenarioRepo(), DeviceScenario.class);
                     case "DeviceStateLog" -> loadTable(context.getDeviceStateLogRepo(), DeviceStateLog.class);
@@ -62,11 +96,11 @@ public class TablePanelPageController {
     }
 
     private void applyPermissions() {
-        boolean isAdmin = UserSession.isAdmin();
-        actionButtonsContainer.setVisible(isAdmin);
-        buttonAdd.setDisable(!isAdmin);
-        buttonEdit.setDisable(!isAdmin);
-        buttonDelete.setDisable(!isAdmin);
+        actionButtonsContainer.setVisible(true);
+
+        buttonAdd.setDisable(false);
+        buttonEdit.setDisable(false);
+        buttonDelete.setDisable(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -78,34 +112,16 @@ public class TablePanelPageController {
         genericTable.getColumns().clear();
         genericTable.getItems().clear();
 
-        for (Field field : entityClass.getDeclaredFields()) {
-            if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) continue;
-
-            String fieldName = field.getName();
-            String prettyHeader = fieldName.replaceAll("([a-z])([A-Z])", "$1 $2");
-            prettyHeader = prettyHeader.substring(0, 1).toUpperCase() + prettyHeader.substring(1);
-
-            TableColumn<Object, Object> column = new TableColumn<>(prettyHeader);
-
-            column.setCellValueFactory(cellData -> {
-                try {
-                    Object item = cellData.getValue();
-                    field.setAccessible(true);
-                    Object value = field.get(item);
-                    return new javafx.beans.property.SimpleObjectProperty<>(value != null ? value : "-");
-                } catch (Exception e) {
-                    return new javafx.beans.property.SimpleObjectProperty<>("[Fehler]");
-                }
-            });
-
-            if (fieldName.equalsIgnoreCase("id")) {
-                column.setStyle("-fx-alignment: CENTER;");
-            }
-
-            genericTable.getColumns().add(column);
-        }
+        createColumnsForClass(entityClass);
 
         List<Object> data = (List<Object>) currentRepo.getAll();
+
+        if (!UserSession.isAdmin()) {
+            data = data.stream()
+                    .filter(this::isUserTable)
+                    .toList();
+        }
+
         genericTable.setItems(FXCollections.observableArrayList(data));
 
         javafx.application.Platform.runLater(() -> {
@@ -135,7 +151,14 @@ public class TablePanelPageController {
 
     @FXML
     public void handleAdd() {
-        if (currentClass == null || currentRepo == null) return;
+        if (currentClass == null) return;
+
+        if (currentClass == Scenario.class && !UserSession.isAdmin()) {
+            handleAddUserScenario();
+            return;
+        }
+
+        if (currentRepo == null) return;
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Neuen Eintrag hinzufügen in " + currentClass.getSimpleName());
@@ -181,6 +204,11 @@ public class TablePanelPageController {
         Object selectedItem = genericTable.getSelectionModel().getSelectedItem();
         if (selectedItem == null) {
             showWarningAlert("Bitte wählen Sie die Zeile aus, die Sie ändern möchten.");
+            return;
+        }
+
+        if (currentClass == Scenario.class && !UserSession.isAdmin()) {
+            handleEditUserScenario((Scenario) selectedItem);
             return;
         }
 
@@ -249,6 +277,11 @@ public class TablePanelPageController {
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.YES) {
                 try {
+                    if (currentClass == Scenario.class && !UserSession.isAdmin()) {
+                        scenarioService.delete((Scenario) selectedItem);
+                        loadUserScenarios();
+                        return;
+                    }
                     currentRepo.delete(selectedItem);
                     genericTable.getItems().remove(selectedItem);
                 } catch (RuntimeException e) {
@@ -266,7 +299,7 @@ public class TablePanelPageController {
             ComboBox<Object> comboBox = new ComboBox<>();
             comboBox.setMaxWidth(Double.MAX_VALUE);
 
-            AppContext context = AppContext.getInstance();
+            AppContext context = getInstance();
             GeneralRepo<?> relatedRepo = null;
 
             if (fieldType == User.class) relatedRepo = context.getUserRepo();
@@ -381,5 +414,181 @@ public class TablePanelPageController {
         Alert alert = new Alert(Alert.AlertType.ERROR, content, ButtonType.OK);
         alert.setHeaderText(null);
         alert.showAndWait();
+    }
+
+    private boolean isUserTable(Object item) {
+        Long userId = UserSession.getCurrentUserId();
+
+        if (item instanceof Home home) {
+            return home.getUser() != null && home.getUser().getId().equals(userId);
+        }
+
+        if (item instanceof Room room) {
+            return room.getHome() != null
+                    && room.getHome().getUser() != null
+                    && room.getHome().getUser().getId().equals(userId);
+        }
+
+        if (item instanceof Device device) {
+            return device.getRoom() != null
+                    && device.getRoom().getHome() != null
+                    && device.getRoom().getHome().getUser() != null
+                    && device.getRoom().getHome().getUser().getId().equals(userId);
+        }
+
+        return false;
+    }
+
+    private void loadUserScenarios() {
+        this.currentRepo = null;
+        this.currentClass = Scenario.class;
+
+        genericTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        genericTable.getColumns().clear();
+        genericTable.getItems().clear();
+
+        createColumnsForClass(Scenario.class);
+
+        Long userId = UserSession.getCurrentUserId();
+
+        List<Object> data = scenarioService.getScenariosByUserId(userId)
+                .stream()
+                .map(s -> (Object) s)
+                .toList();
+
+        genericTable.setItems(FXCollections.observableArrayList(data));
+    }
+
+    private void createColumnsForClass(Class<?> entityClass) {
+        genericTable.getColumns().clear();
+
+        for (Field field : entityClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) {
+                continue;
+            }
+
+            String fieldName = field.getName();
+            String prettyHeader = fieldName.replaceAll("([a-z])([A-Z])", "$1 $2");
+            prettyHeader = prettyHeader.substring(0, 1).toUpperCase() + prettyHeader.substring(1);
+
+            TableColumn<Object, Object> column = new TableColumn<>(prettyHeader);
+
+            column.setCellValueFactory(cellData -> {
+                try {
+                    Object item = cellData.getValue();
+                    field.setAccessible(true);
+                    Object value = field.get(item);
+                    return new javafx.beans.property.SimpleObjectProperty<>(value != null ? value : "-");
+                } catch (Exception e) {
+                    return new javafx.beans.property.SimpleObjectProperty<>("[Fehler]");
+                }
+            });
+
+            if (fieldName.equalsIgnoreCase("id")) {
+                column.setStyle("-fx-alignment: CENTER;");
+            }
+
+            genericTable.getColumns().add(column);
+        }
+    }
+
+    private void handleAddUserScenario() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Neues Szenario hinzufügen");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        TextField nameField = new TextField();
+        TextField descriptionField = new TextField();
+        CheckBox activeCheckBox = new CheckBox("Aktiv");
+        activeCheckBox.setSelected(true);
+        TextField startTimeField = new TextField();
+        TextField endTimeField = new TextField();
+
+        startTimeField.setPromptText("HH:mm");
+        endTimeField.setPromptText("HH:mm");
+
+        VBox form = new VBox(10,
+                new Label("Name:"), nameField,
+                new Label("Beschreibung:"), descriptionField,
+                activeCheckBox,
+                new Label("Startzeit:"), startTimeField,
+                new Label("Endzeit:"), endTimeField
+        );
+
+        form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
+        dialog.getDialogPane().setContent(form);
+
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    Scenario scenario = new Scenario();
+
+                    scenario.setName(nameField.getText().trim());
+                    scenario.setDescription(descriptionField.getText().trim());
+                    scenario.setIsActive(activeCheckBox.isSelected());
+                    scenario.setStartTime(java.time.LocalTime.parse(startTimeField.getText().trim()));
+                    scenario.setEndTime(java.time.LocalTime.parse(endTimeField.getText().trim()));
+
+                    scenarioService.save(scenario);
+
+                    loadUserScenarios();
+
+                } catch (Exception e) {
+                    showErrorAlert("Fehler beim Erstellen des Szenarios: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void handleEditUserScenario(Scenario selectedScenario) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Szenario bearbeiten");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        TextField nameField = new TextField(selectedScenario.getName());
+        TextField descriptionField = new TextField(selectedScenario.getDescription());
+
+        CheckBox activeCheckBox = new CheckBox("Aktiv");
+        activeCheckBox.setSelected(Boolean.TRUE.equals(selectedScenario.getIsActive()));
+
+        TextField startTimeField = new TextField(
+                selectedScenario.getStartTime() != null ? selectedScenario.getStartTime().toString() : ""
+        );
+
+        TextField endTimeField = new TextField(
+                selectedScenario.getEndTime() != null ? selectedScenario.getEndTime().toString() : ""
+        );
+
+        VBox form = new VBox(10,
+                new Label("Name:"), nameField,
+                new Label("Beschreibung:"), descriptionField,
+                activeCheckBox,
+                new Label("Startzeit:"), startTimeField,
+                new Label("Endzeit:"), endTimeField
+        );
+
+        form.setStyle("-fx-padding: 15; -fx-min-width: 350;");
+        dialog.getDialogPane().setContent(form);
+
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    Scenario updatedScenario = new Scenario();
+
+                    updatedScenario.setName(nameField.getText().trim());
+                    updatedScenario.setDescription(descriptionField.getText().trim());
+                    updatedScenario.setIsActive(activeCheckBox.isSelected());
+                    updatedScenario.setStartTime(LocalTime.parse(startTimeField.getText().trim()));
+                    updatedScenario.setEndTime(LocalTime.parse(endTimeField.getText().trim()));
+
+                    scenarioService.update(updatedScenario, selectedScenario);
+
+                    loadUserScenarios();
+
+                } catch (Exception e) {
+                    showErrorAlert("Fehler beim Aktualisieren des Szenarios: " + e.getMessage());
+                }
+            }
+        });
     }
 }
