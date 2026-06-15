@@ -18,6 +18,7 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 
 import static whz.pti.utils.AppContext.*;
 
@@ -72,7 +73,7 @@ public class TablePanelPageController {
         tablesListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 labelCurrentTableName.setText("Tabelle: " + newVal);
-                AppContext context = getInstance();
+                AppContext context = AppContext.getInstance();
 
                 switch (newVal) {
                     case "Users" -> loadTable(context.getUserRepo(), User.class);
@@ -294,7 +295,55 @@ public class TablePanelPageController {
     private Control createInputControlForField(Field field, Object currentValue) {
         Class<?> fieldType = field.getType();
 
-        // СЦЕНАРИЙ 1: Поле является Foreign Key
+        if (fieldType == boolean.class || fieldType == Boolean.class) {
+            ComboBox<String> booleanComboBox = new ComboBox<>();
+            booleanComboBox.setItems(FXCollections.observableArrayList("Yes", "No"));
+            booleanComboBox.setMaxWidth(Double.MAX_VALUE);
+
+            if (currentValue != null) {
+                boolean val = (boolean) currentValue;
+                booleanComboBox.getSelectionModel().select(val ? "Yes" : "No");
+            } else {
+                booleanComboBox.getSelectionModel().select("No");
+            }
+
+            return booleanComboBox;
+        }
+
+        if (field.isAnnotationPresent(whz.pti.utils.annotations.ManyToMany.class)) {
+            whz.pti.utils.annotations.ManyToMany anno = field.getAnnotation(whz.pti.utils.annotations.ManyToMany.class);
+
+            ListView<Object> listView = new ListView<>();
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            listView.setPrefHeight(120);
+
+            try {
+                Class<?> repoClass = anno.repoClass();
+
+                GeneralRepo<?> relatedRepo = getRepoFromContextByClass(repoClass);
+
+                if (relatedRepo != null) {
+                    List<Object> allAvailableItems = new ArrayList<>();
+                    for (Object item : relatedRepo.getAll()) {
+                        allAvailableItems.add(item);
+                    }
+                    listView.setItems(FXCollections.observableArrayList(allAvailableItems));
+
+                    if (currentValue instanceof Collection<?> currentConnections) {
+                        for (Object item : allAvailableItems) {
+                            if (currentConnections.contains(item)) {
+                                listView.getSelectionModel().select(item);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return listView;
+        }
+
         if (field.isAnnotationPresent(ForeignKey.class)) {
             ComboBox<Object> comboBox = new ComboBox<>();
             comboBox.setMaxWidth(Double.MAX_VALUE);
@@ -306,6 +355,9 @@ public class TablePanelPageController {
             else if (fieldType == Room.class) relatedRepo = context.getRoomRepo();
             else if (fieldType == Home.class) relatedRepo = context.getHomeRepo();
             else if (fieldType == Scenario.class) relatedRepo = context.getScenarioRepo();
+            else if (fieldType == DeviceScenario.class) relatedRepo = context.getDeviceScenarioRepo();
+            else if (fieldType == DeviceUser.class) relatedRepo = context.getDeviceUserRepo();
+            else if (fieldType == DeviceStateLog.class) relatedRepo = context.getDeviceStateLogRepo();
             else if (fieldType == Device.class) relatedRepo = context.getDeviceRepo();
             else if (fieldType == DeviceType.class) relatedRepo = context.getDeviceTypeRepo();
 
@@ -359,6 +411,15 @@ public class TablePanelPageController {
             Control control = entry.getValue();
             Class<?> fieldType = field.getType();
 
+            if ((fieldType == boolean.class || fieldType == Boolean.class) && control instanceof ComboBox) {
+                ComboBox<String> comboBox = (ComboBox<String>) control;
+                String selectedValue = comboBox.getSelectionModel().getSelectedItem();
+
+                boolean booleanValue = "Yes".equals(selectedValue);
+                field.set(entity, booleanValue);
+                continue;
+            }
+
             if (control instanceof ComboBox<?> comboBox) {
                 Object selectedValue = comboBox.getSelectionModel().getSelectedItem();
 
@@ -372,6 +433,13 @@ public class TablePanelPageController {
                 } else {
                     field.set(entity, selectedValue);
                 }
+                continue;
+            }
+
+            if (control instanceof ListView<?> listView) {
+                List<?> selectedItems = new ArrayList<>(listView.getSelectionModel().getSelectedItems());
+
+                field.set(entity, selectedItems);
                 continue;
             }
 
@@ -396,6 +464,24 @@ public class TablePanelPageController {
                         field.set(entity, java.time.LocalDate.parse(textValue));
                     } catch (java.time.format.DateTimeParseException e) {
                         throw new RuntimeException("Falsches Datumsformat für " + field.getName() + ". Bitte YYYY-MM-DD nutzen.");
+                    }
+                } else if (fieldType == java.time.LocalTime.class) {
+                    try {
+                        field.set(entity, java.time.LocalTime.parse(textValue));
+                    } catch (java.time.format.DateTimeParseException e) {
+                        throw new RuntimeException("Falsches Zeitformat für " + field.getName() + ". Bitte hh:mm nutzen.");
+                    }
+                } else if (fieldType == java.time.LocalDateTime.class) {
+                    try {
+                        String normalizedValue = textValue.replace(" ", "T");
+
+                        if (normalizedValue.length() == 16) {
+                            normalizedValue += ":00";
+                        }
+
+                        field.set(entity, java.time.LocalDateTime.parse(normalizedValue));
+                    } catch (java.time.format.DateTimeParseException e) {
+                        throw new RuntimeException("Falsches Format für " + field.getName() + ". Bitte 'YYYY-MM-DD hh:mm' nutzen.");
                     }
                 } else {
                     field.set(entity, textValue);
@@ -590,5 +676,97 @@ public class TablePanelPageController {
                 }
             }
         });
+    }
+
+    private GeneralRepo<?> getRepoFromContextByClass(Class<?> repoClass) {
+        AppContext context = AppContext.getInstance();
+
+        if (repoClass.getSimpleName().equals("DeviceRepository") || repoClass.getSimpleName().contains("DeviceRepo")) {
+            return context.getDeviceRepo();
+        }
+        if (repoClass.getSimpleName().equals("ScenarioRepository") || repoClass.getSimpleName().contains("ScenarioRepo")) {
+            return context.getScenarioRepo();
+        }
+        if (repoClass.getSimpleName().equals("UserRepository") || repoClass.getSimpleName().contains("UserRepo")) {
+            return context.getUserRepo();
+        }
+        if (repoClass.getSimpleName().equals("RoomRepository") || repoClass.getSimpleName().contains("RoomRepo")) {
+            return context.getRoomRepo();
+        }
+        if (repoClass.getSimpleName().equals("HomeRepository") || repoClass.getSimpleName().contains("HomeRepo")) {
+            return context.getHomeRepo();
+        }
+        if (repoClass.getSimpleName().equals("DeviceTypeRepository") || repoClass.getSimpleName().contains("DeviceTypeRepo")) {
+            return context.getDeviceTypeRepo();
+        }
+
+        return null;
+    }
+
+    private List<Field> determineKeyFields(Class<?> clazz) {
+        List<Field> keyFields = new ArrayList<>();
+
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.getName().equalsIgnoreCase("id")) {
+                keyFields.add(field);
+                return keyFields;
+            }
+        }
+
+        for (Field field : clazz.getDeclaredFields()) {
+            Class<?> type = field.getType();
+            if (!type.isPrimitive() && type != String.class &&
+                    type != java.time.LocalDate.class && type != java.time.LocalTime.class &&
+                    type != java.time.LocalDateTime.class && !type.isEnum() &&
+                    type != Integer.class && type != Long.class && type != Double.class) {
+
+                keyFields.add(field);
+            }
+        }
+
+        return keyFields;
+    }
+
+    private boolean isDuplicateCompositeKey(Object dbEntity, Object newEntity) throws Exception {
+        for (Field field : currentClass.getDeclaredFields()) {
+            field.setAccessible(true);
+            Object dbValue = field.get(dbEntity);
+            Object newValue = field.get(newEntity);
+
+            if (dbValue == null && newValue == null) {
+                continue;
+            }
+
+            if ((dbValue == null && newValue != null) || (dbValue != null && newValue == null)) {
+                return false;
+            }
+
+            if (!field.getType().isPrimitive() && field.getType() != String.class &&
+                    !field.getType().getName().startsWith("java.time") &&
+                    field.getType() != Integer.class && field.getType() != Long.class && field.getType() != Double.class) {
+
+                try {
+                    Field idField = dbValue.getClass().getDeclaredField("id");
+                    idField.setAccessible(true);
+
+                    Object dbId = idField.get(dbValue);
+                    Object newId = idField.get(newValue);
+
+                    if (dbId != null && !dbId.equals(newId)) {
+                        return false;
+                    }
+                } catch (NoSuchFieldException ignored) {
+                    if (!dbValue.equals(newValue)) {
+                        return false;
+                    }
+                }
+            } else {
+                if (!dbValue.equals(newValue)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

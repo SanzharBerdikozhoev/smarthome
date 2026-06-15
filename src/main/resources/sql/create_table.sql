@@ -54,7 +54,7 @@ CREATE TABLE device
     name              VARCHAR(100) NOT NULL,
     room_id           INT          NOT NULL,
     device_type_id    INT          NOT NULL,
-    installation_date DATE         NOT NULL,
+    installation_date DATE         NOT NULL DEFAULT GETDATE(),
     is_active         BIT          NOT NULL DEFAULT 1,
 
     CONSTRAINT fk_device_room

@@ -11,13 +11,13 @@ public class DeviceStateLog {
     @Column(name = "timestamp")
     private LocalDateTime time;
     @Column(name = "state_value")
-    private String state;
+    private DeviceLogState state;
     @Column(name = "user_id")
     private Long user;
 
     public DeviceStateLog() {}
 
-    public DeviceStateLog(Long id, Long device, LocalDateTime time, String state, Long  user) {
+    public DeviceStateLog(Long id, Long device, LocalDateTime time, DeviceLogState state, Long  user) {
         this.id = id;
         this.device = device;
         this.time = time;
@@ -49,11 +49,11 @@ public class DeviceStateLog {
         this.time = time;
     }
 
-    public String getState() {
+    public DeviceLogState getState() {
         return state;
     }
 
-    public void setState(String state) {
+    public void setState(DeviceLogState state) {
         this.state = state;
     }
 
@@ -68,7 +68,7 @@ public class DeviceStateLog {
     @Override
     public String toString() {
         String deviceName = (this.device != null) ? this.device.toString() : "Unbekanntes Gerät";
-        String stateValue = (this.state != null && !this.state.trim().isEmpty()) ? this.state : "KEIN STATUS";
+        String stateValue = (this.state != null && !this.state.name().trim().isEmpty()) ? this.state.name() : "KEIN STATUS";
         String timeStamp = (this.time != null) ? this.time.toString() : "Unbekannte Zeit";
         String userName = (this.user != null) ? " (Aktion durch: " + this.user.toString() + ")" : "";
 

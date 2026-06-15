@@ -2,6 +2,7 @@ package whz.pti.repositories.implementation;
 
 import whz.pti.models.Device;
 import whz.pti.models.DeviceScenario;
+import whz.pti.models.DeviceScenarioRole;
 import whz.pti.repositories.DeviceRepo;
 import whz.pti.repositories.DeviceScenarioRepo;
 import whz.pti.utils.DBConnection;
@@ -38,16 +39,23 @@ public class DeviceScenarioRepoImpl extends GeneralRepoImpl<DeviceScenario> impl
             DeviceRepo deviceRepo = new DeviceRepoImpl();
 
             while (rs.next()) {
-
                 Long deviceId = rs.getLong("device_id");
-
-                Device device =
-                        deviceRepo.getById(deviceId).orElse(null);
+                Device device = deviceRepo.getById(deviceId).orElse(null);
 
                 DeviceScenario ds = new DeviceScenario();
-
                 ds.setDevice(device);
-                ds.setRole(rs.getString("role"));
+
+                String roleStr = rs.getString("role");
+                if (roleStr != null) {
+                    try {
+                        ds.setRole(DeviceScenarioRole.valueOf(roleStr.trim()));
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Warnung: Unbekannter Enum-Wert in DB: " + roleStr);
+                        ds.setRole(null);
+                    }
+                } else {
+                    ds.setRole(null);
+                }
 
                 result.add(ds);
             }
