@@ -310,27 +310,6 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
         return null;
     }
 
-//    @Override
-//    public void delete(Object entity) {
-//        if (entity == null) {
-//            return;
-//        }
-//
-//        try {
-//            @SuppressWarnings("unchecked")
-//            Map<String, Object> fields = unmapEntity((T) entity);
-//            Object idValue = fields.get("id");
-//
-//            if (idValue instanceof Long) {
-//                deleteById((Long) idValue);
-//            } else if (idValue instanceof Integer) {
-//                deleteById(((Integer) idValue).longValue());
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     @Override
     public void delete(T entity) {
         if (entity == null) return;
@@ -396,8 +375,6 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
             for (int i = 0; i < keyFields.size(); i++) {
                 Field field = keyFields.get(i);
 
-                // Если таблицы с ID -> колонка "id". Если без ID -> "device_id", "scenario_id"
-
                 String columnName;
                 if(field.getName().equals("scenario")) {
                     columnName = "automation_id";
@@ -417,7 +394,6 @@ public class GeneralRepoImpl<T> implements GeneralRepo<T> {
                     field.setAccessible(true);
                     Object value = field.get(entity);
 
-                    // Если это связующая таблица и поле является объектом, достаем его числовое ID
                     if (!hasSingleId && value != null && isEntityField(field)) {
                         Field innerId = value.getClass().getDeclaredField("id");
                         innerId.setAccessible(true);

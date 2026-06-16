@@ -24,8 +24,9 @@
 }
 
 #userStatusLabel {
-    -fx-text-fill: #94a3b8;
-    -fx-font-size: 13;
+    -fx-text-fill: white;
+    -fx-font-size: 18;
+    -fx-font-weight: bold;
 }
 
 #logoutButton {

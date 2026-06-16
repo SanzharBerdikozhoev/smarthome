@@ -1,5 +1,5 @@
 package whz.pti.models;
 
 public enum DeviceLogState {
-    ON, OFF, ERROR
+    ON, OFF, ERROR, STANDBY
 }

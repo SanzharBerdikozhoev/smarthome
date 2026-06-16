@@ -143,3 +143,52 @@ CREATE TABLE device_scenario
                         'CONDITION_SENSOR'
             ))
 );
+
+CREATE PROCEDURE sp_CheckAndExecuteScenarios
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @CurrentTime TIME = CAST(GETDATE() AS TIME);
+
+    DECLARE @SystemUserId INT = 1;
+
+    DECLARE @DevicesToActivate TABLE (device_id INT);
+
+    DECLARE @DevicesToDeactivate TABLE (device_id INT);
+
+    INSERT INTO @DevicesToActivate (device_id)
+    SELECT DISTINCT ds.device_id
+    FROM device_scenario ds
+             JOIN scenario s ON ds.automation_id = s.id
+    WHERE s.is_active = 1
+      AND (
+        (s.start_time <= s.end_time AND @CurrentTime BETWEEN s.start_time AND s.end_time)
+            OR
+        (s.start_time > s.end_time AND (@CurrentTime >= s.start_time OR @CurrentTime <= s.end_time))
+        );
+
+    INSERT INTO @DevicesToDeactivate (device_id)
+    SELECT DISTINCT ds.device_id
+    FROM device_scenario ds
+             JOIN scenario s ON ds.automation_id = s.id
+    WHERE ds.device_id NOT IN (SELECT device_id FROM @DevicesToActivate);
+
+    INSERT INTO device_state_log (device_id, user_id, timestamp, state_value)
+    SELECT d.id, @SystemUserId, GETDATE(), 'ON'
+    FROM device d
+    WHERE d.id IN (SELECT device_id FROM @DevicesToActivate) AND d.is_active = 0;
+
+    UPDATE device
+    SET is_active = 1
+    WHERE id IN (SELECT device_id FROM @DevicesToActivate) AND is_active = 0;
+
+    INSERT INTO device_state_log (device_id, user_id, timestamp, state_value)
+    SELECT d.id, @SystemUserId, GETDATE(), 'OFF'
+    FROM device d
+    WHERE d.id IN (SELECT device_id FROM @DevicesToDeactivate) AND d.is_active = 1;
+
+    UPDATE device
+    SET is_active = 0
+    WHERE id IN (SELECT device_id FROM @DevicesToDeactivate) AND id NOT IN (SELECT device_id FROM @DevicesToActivate) AND is_active = 1;
+END;

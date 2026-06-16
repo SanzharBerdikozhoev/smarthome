@@ -2,14 +2,10 @@ package whz.pti.controllers;
 
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import whz.pti.models.SafeUser;
 import whz.pti.services.AuthService;
@@ -78,6 +74,12 @@ public class LoginPageController {
         }
 
         UserSession.setSession(currentUser);
+
+        if(currentUser.getRole() == whz.pti.models.Role.ADMIN) {
+            PageSwitcher.switchTo("TablePanelPage", loginButton);
+            return;
+        }
+
         PageSwitcher.switchTo("HomePage", loginButton);
     }
 }
