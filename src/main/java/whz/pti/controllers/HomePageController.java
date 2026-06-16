@@ -178,13 +178,14 @@ public class HomePageController {
                 setButtonStyle(scenarioButton, scenario.getIsActive());
                 if (!isReadOnly()) {
                     scenarioButton.setOnAction(event -> handleScenarioClick(scenario, scenarioButton));
+                    Button deleteButton = new Button("✕");
+                    deleteButton.getStyleClass().add("delete-button-small");
+                    deleteButton.setOnAction(event -> deleteScenario(scenario));
+                    scenarioBox.getChildren().add(deleteButton);
                 }
 
-                Button deleteButton = new Button("✕");
-                deleteButton.getStyleClass().add("delete-button-small");
-                deleteButton.setOnAction(event -> deleteScenario(scenario));
 
-                scenarioBox.getChildren().addAll(scenarioButton, deleteButton);
+                scenarioBox.getChildren().add(scenarioButton);
                 scenariosContainer.getChildren().add(scenarioBox);
 
             }
